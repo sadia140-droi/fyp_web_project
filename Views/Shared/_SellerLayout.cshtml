@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+    <link rel="stylesheet" href="~/css/SellerDashboard.css" />
+    <link rel="stylesheet" href="~/css/sellermenu.css" />
+    <link rel="stylesheet" href="~/css/manageorders.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/notification.css" />
+    <link rel="stylesheet" href="~/css/sellerprofile.css" />
+    <link rel="stylesheet" href="~/css/setting.css" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="top-bar">
+        <div class="left">
+            <img src="~/images/logo.png" alt="Cloud Kitchen">
+            <h1>Cloud Kitchen</h1>
+        </div>
+        <div class="right">
+            <a href="/Home/Index" title="Home"><i class="fas fa-home"></i></a>
+            <a href="/Seller/Notification" title="Notifications" class="seller-notif-link" style="position: relative; display: inline-flex; align-items: center;">
+                <i class="fas fa-bell"></i>
+                <span id="sellerNavBadge" style="display: none; position: absolute; top: -7px; right: -9px; background: #e67e00; color: #fff; font-size: 11px; font-weight: bold; padding: 2px 5px; border-radius: 10px; min-width: 16px; text-align: center; line-height: 1;">0</span>
+            </a>
+        </div>
+    </header>
+
+@*     <div class="dashboard-wrapper"> *@
+        <aside class="sidebar">
+            <h2>Dashboard</h2>
+            <nav class="menu">
+                @{
+                    var currentPath = Context.Request.Path.Value ?? "";
+                    string GetActiveClass(string path) => currentPath.Contains(path, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+                }
+                <a href="/Seller/SellerDashboard" class="@GetActiveClass("/Seller/SellerDashboard")">Overview</a>
+                <a href="/Seller/MenuManage" class="@GetActiveClass("/Seller/MenuManage")">Menu</a>
+                <a href="/Seller/ManageOrders" class="@GetActiveClass("/Seller/ManageOrders")">Orders</a>
+                <a href="/Seller/Reviews" class="@GetActiveClass("/Seller/Reviews")">Reviews</a>
+                <a href="/Seller/Notification" class="@GetActiveClass("/Seller/Notification")@GetActiveClass("/Seller/Notifications")" style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>Notification</span>
+                    <span id="sellerSidebarBadge" style="display: none; background: #e67e00; color: #fff; font-size: 11px; font-weight: bold; padding: 2px 7px; border-radius: 10px; line-height: 1;">0</span>
+                </a>
+                <a href="/Seller/SellerProfile" class="@GetActiveClass("/Seller/SellerProfile")">Profile</a>
+                <a href="/Seller/Setting" class="@GetActiveClass("/Seller/Setting")">Setting</a>
+            </nav>
+            <div class="logout">
+                <form asp-controller="Account" asp-action="Logout" method="post" id="sellerLogoutForm" style="display: none;">
+                    @Html.AntiForgeryToken()
+                </form>
+                <a href="javascript:void(0);" onclick="try{localStorage.removeItem('kitchenCarts');sessionStorage.clear();}catch(e){}document.getElementById('sellerLogoutForm').submit();">Logout</a>
+            </div>
+        </aside>
+
+            @RenderBody()
+    @* </div> *@
+
+    <script src="~/js/Sellerdashboard.js" asp-append-version="true"></script>
+    <script src="~/js/sellermenu.js" asp-append-version="true"></script>
+    <script src="~/js/manageorders.js" asp-append-version="true"></script>
+
+    <script>
+        function updateSellerBadge() {
+            fetch('/Seller/GetSellerUnreadNotificationCount?_t=' + Date.now(), { cache: 'no-store' })
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    const count = (data && data.count) || 0;
+                    const topB = document.getElementById('sellerNavBadge');
+                    const sideB = document.getElementById('sellerSidebarBadge');
+                    if (topB) {
+                        if (count > 0) {
+                            topB.textContent = count > 99 ? '99+' : count;
+                            topB.style.display = 'inline-block';
+                        } else {
+                            topB.style.display = 'none';
+                        }
+                    }
+                    if (sideB) {
+                        if (count > 0) {
+                            sideB.textContent = count > 99 ? '99+' : count;
+                            sideB.style.display = 'inline-block';
+                        } else {
+                            sideB.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            updateSellerBadge();
+            setInterval(updateSellerBadge, 15000);
+        });
+    </script>
+</body>
+</html>

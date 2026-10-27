@@ -1,0 +1,369 @@
+@model Cloud_Kitchen_web_App.Models.SellerProfileViewModel
+
+@{
+    ViewData["Title"] = "Seller Profile";
+    Layout = "~/Views/Shared/_SellerLayout.cshtml";
+}
+
+<main class="main-content">
+
+    <div class="profile-header">
+
+        <div class="avatar card">
+            @{
+                var profName = string.IsNullOrWhiteSpace(Model?.Name) ? "Seller" : Model.Name.Trim();
+                var pParts = profName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var pInitials = pParts.Length > 1 
+                    ? $"{pParts[0][0]}{pParts[pParts.Length - 1][0]}".ToUpper() 
+                    : pParts[0].Substring(0, 1).ToUpper();
+                var hasPhoto = !string.IsNullOrWhiteSpace(Model?.Photo) && !Model.Photo.Contains("profile.png");
+            }
+            @if (hasPhoto)
+            {
+                <img id="avatarImg"
+                     src="@Url.Content(Model!.Photo)"
+                     alt="Seller profile photo"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" />
+                <div class="profile-avatar-letter" style="display:none; width:100%; height:100%; border-radius:12px; font-size:42px;">@pInitials</div>
+            }
+            else
+            {
+                <div class="profile-avatar-letter" style="width:100%; height:100%; border-radius:12px; font-size:42px;">@pInitials</div>
+            }
+        </div>
+
+        <div class="profile-info">
+
+            <h2 id="profileName">
+                @Model?.Name
+            </h2>
+
+            <div class="small" id="profileShop">
+                @Model?.Shop • Seller
+            </div>
+
+            <div class="small" id="profilePhone">
+                @Model?.Phone
+            </div>
+
+            <div style="margin-top:8px">
+                <button type="button"
+                        id="btnEdit"
+                        class="btn btn-edit">
+                    Edit Profile
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3 style="margin-bottom:10px;color:var(--dark-brown)">
+            Profile Details
+        </h3>
+
+
+        <!-- =====================================================
+             VIEW MODE
+        ====================================================== -->
+
+        <div id="profileView">
+
+            <div class="form-row">
+
+                <div class="col">
+                    <label>Full name</label>
+
+                    <div id="viewName">
+                        @Model?.Name
+                    </div>
+                </div>
+
+
+                <div class="col">
+                    <label>Shop name</label>
+
+                    <div id="viewShop">
+                        @Model?.Shop
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="col">
+                    <label>Phone</label>
+
+                    <div id="viewPhone">
+                        @Model?.Phone
+                    </div>
+                </div>
+
+
+                <div class="col">
+                    <label>Email</label>
+
+                    <div id="viewEmail">
+                        @Model?.Email
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div style="margin-top:12px">
+
+                <label>Address</label>
+
+                <div id="viewAddress">
+                    @Model?.Address
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             EDIT MODE
+        ====================================================== -->
+
+        <form id="profileForm"
+              asp-controller="Seller"
+              asp-action="UpdateSellerProfile"
+              method="post"
+              style="display:none;margin-top:8px">
+
+            @Html.AntiForgeryToken()
+
+
+            <div class="form-row">
+
+                <div class="col">
+
+                    <label for="inputName">
+                        Full name
+                    </label>
+
+                    <input id="inputName"
+                           name="Name"
+                           type="text"
+                           maxlength="200"
+                           value="@Model?.Name"
+                           required />
+
+                </div>
+
+
+                <div class="col">
+
+                    <label for="inputShop">
+                        Shop name
+                    </label>
+
+                    <input id="inputShop"
+                           name="Shop"
+                           type="text"
+                           maxlength="200"
+                           value="@Model?.Shop"
+                           required />
+
+                </div>
+
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="col">
+
+                    <label for="inputPhone">
+                        Phone
+                    </label>
+
+                    <input id="inputPhone"
+                           name="Phone"
+                           type="tel"
+                           maxlength="50"
+                           value="@Model?.Phone" />
+
+                </div>
+
+
+                <div class="col">
+
+                    <label for="inputEmail">
+                        Email
+                    </label>
+
+                    <input id="inputEmail"
+                           name="Email"
+                           type="email"
+                           value="@Model?.Email"
+                           readonly />
+
+                </div>
+
+            </div>
+
+
+            <div style="margin-top:8px">
+
+                <label for="inputAddress">
+                    Address
+                </label>
+
+                <textarea id="inputAddress"
+                          name="Address"
+                          maxlength="500">@Model?.Address</textarea>
+
+            </div>
+
+
+            <div class="actions"
+                 style="margin-top:12px">
+
+                <button type="submit"
+                        id="saveProfile"
+                        class="btn btn-save">
+                    Save
+                </button>
+
+                <button type="button"
+                        id="cancelEdit"
+                        class="btn btn-cancel">
+                    Cancel
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</main>
+
+
+<script>
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const btnEdit =
+                document.getElementById("btnEdit");
+
+            const cancelEdit =
+                document.getElementById("cancelEdit");
+
+            const profileView =
+                document.getElementById("profileView");
+
+            const profileForm =
+                document.getElementById("profileForm");
+
+            const inputName =
+                document.getElementById("inputName");
+
+            const inputShop =
+                document.getElementById("inputShop");
+
+            const inputPhone =
+                document.getElementById("inputPhone");
+
+            const inputAddress =
+                document.getElementById("inputAddress");
+
+
+            function openEditMode() {
+
+                profileView.style.display =
+                    "none";
+
+                profileForm.style.display =
+                    "block";
+
+                inputName?.focus();
+            }
+
+
+            function closeEditMode() {
+
+                profileForm.style.display =
+                    "none";
+
+                profileView.style.display =
+                    "block";
+
+                /*
+                    Restore values from the currently
+                    displayed database-backed profile.
+                */
+
+                inputName.value =
+                    document.getElementById(
+                        "viewName"
+                    )?.textContent.trim() || "";
+
+                inputShop.value =
+                    document.getElementById(
+                        "viewShop"
+                    )?.textContent.trim() || "";
+
+                inputPhone.value =
+                    document.getElementById(
+                        "viewPhone"
+                    )?.textContent.trim() || "";
+
+                inputAddress.value =
+                    document.getElementById(
+                        "viewAddress"
+                    )?.textContent.trim() || "";
+            }
+
+
+            btnEdit?.addEventListener(
+                "click",
+                openEditMode
+            );
+
+
+            cancelEdit?.addEventListener(
+                "click",
+                closeEditMode
+            );
+
+
+            profileForm?.addEventListener(
+                "submit",
+                function () {
+
+                    const saveButton =
+                        document.getElementById(
+                            "saveProfile"
+                        );
+
+                    if (!saveButton) {
+                        return;
+                    }
+
+                    /*
+                        Prevent duplicate submissions.
+                    */
+
+                    saveButton.disabled = true;
+
+                    saveButton.textContent =
+                        "Saving...";
+                }
+            );
+
+        }
+    );
+
+</script>

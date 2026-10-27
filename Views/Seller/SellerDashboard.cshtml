@@ -1,0 +1,645 @@
+@model Cloud_Kitchen_web_App.Models.SellerDashboardViewModel
+
+@{
+    ViewBag.Title = "Overview - Cloud Kitchen (Seller)";
+    Layout = "~/Views/Shared/_SellerLayout.cshtml";
+
+    string StatusClass(string status)
+    {
+        if (string.Equals(status, "Order Placed", StringComparison.OrdinalIgnoreCase)) return "s-new";
+        if (string.Equals(status, "Order Accepted", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Kitchen Preparing", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Preparing", StringComparison.OrdinalIgnoreCase)) return "s-prep";
+        if (string.Equals(status, "Out for Delivery", StringComparison.OrdinalIgnoreCase)) return "s-out";
+        if (string.Equals(status, "Delivered", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Order Delivered", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase)) return "s-delivered";
+        if (string.Equals(status, "Cancelled", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Canceled", StringComparison.OrdinalIgnoreCase)) return "s-cancel";
+        return "s-new";
+    }
+}
+
+<form id="orderAntiForgeryForm" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<main class="main-content">
+
+    <!-- ============================================================
+         SELLER / KITCHEN HEADER
+    ============================================================ -->
+
+    <div class="profile-box"
+         role="region"
+         aria-label="Seller Profile">
+
+        @{
+            var sName = string.IsNullOrWhiteSpace(Model.SellerName) ? "Seller" : Model.SellerName.Trim();
+            var sParts = sName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var sInitials = sParts.Length > 1 
+                ? $"{sParts[0][0]}{sParts[sParts.Length - 1][0]}".ToUpper() 
+                : sParts[0].Substring(0, 1).ToUpper();
+        }
+        <div class="profile-avatar-letter" title="@sName">@sInitials</div>
+
+        <div class="meta">
+
+            <div class="name">
+                @Model.SellerName
+            </div>
+
+            <div class="role">
+                Seller • @Model.KitchenName
+            </div>
+
+        </div>
+
+        <div style="margin-left:auto">
+
+            <span style="
+                display:inline-block;
+                padding:6px 10px;
+                border-radius:999px;
+                background:linear-gradient(90deg,var(--soft-orange),#ffbf72);
+                color:var(--dark-brown);
+                font-weight:700;">
+
+                @Model.StoreStatus
+
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ============================================================
+         OVERVIEW STATISTICS
+    ============================================================ -->
+
+    <section class="overview-grid"
+             aria-label="Key statistics">
+
+        <!-- TOTAL ORDERS -->
+
+        <div class="card">
+
+            <h3>
+                Total Orders
+            </h3>
+
+            <div class="stat"
+                 id="statTotal">
+
+                @Model.TotalOrders
+
+            </div>
+
+            <div class="muted">
+                All time orders
+            </div>
+
+        </div>
+
+
+        <!-- ORDERS THIS WEEK -->
+
+        <div class="card">
+
+            <h3>
+                Orders This Week
+            </h3>
+
+            <div class="stat"
+                 id="statWeek">
+
+                @Model.OrdersThisWeek
+
+            </div>
+
+            <div class="muted">
+                Orders received in the last 7 days
+            </div>
+
+        </div>
+
+
+        <!-- ACTIVE ORDERS -->
+
+        <div class="card">
+
+            <h3>
+                Preparing / Out
+            </h3>
+
+            <div class="stat"
+                 id="statPending">
+
+                @Model.ActiveOrders
+
+            </div>
+
+            <div class="muted">
+                Currently active orders
+            </div>
+
+        </div>
+
+
+        <!-- TODAY EARNINGS -->
+
+        <div class="card">
+
+            <h3>
+                Today Earnings
+            </h3>
+
+            <div class="stat"
+                 id="statEarnings">
+
+                Rs. @Model.TodayEarnings.ToString("N2")
+
+            </div>
+
+            <div class="muted">
+                Delivered orders today
+            </div>
+
+        </div>
+
+
+        <!-- KITCHEN RATING -->
+
+        <div class="card">
+
+            <h3>
+                Kitchen Rating
+            </h3>
+
+            <div class="stat"
+                 style="display:flex; align-items:center; gap:6px;">
+
+                <span>@(Model.Rating > 0 ? Model.Rating.ToString("0.0") : "0.0")</span>
+                <span style="font-size: 20px; color: #FFD700;">★</span>
+
+            </div>
+
+            <div class="muted"
+                 style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+
+                <span>(@Model.TotalReviews @(Model.TotalReviews == 1 ? "review" : "reviews"))</span>
+                <a href="/Seller/Reviews" style="color:var(--dark-brown); font-weight:600; text-decoration:none; font-size:12px;">View all &rarr;</a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         RECENT ORDERS + QUICK ACTIONS
+    ============================================================ -->
+
+    <section class="layout-two-cols">
+
+
+        <!-- ========================================================
+             RECENT ORDERS
+        ========================================================= -->
+
+        <div class="recent-card">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <h3 style="margin:0;color:var(--dark-brown)">
+                        Completed Orders
+                    </h3>
+                    <div style="font-size:0.85rem; color:var(--muted); margin-top:2px;">
+                        Delivered &amp; completed orders history
+                    </div>
+                </div>
+
+                <div id="overviewLastSync"
+                     style="color:var(--muted); font-size:0.85rem;">
+                    Last sync: Page loaded
+                </div>
+            </div>
+
+
+            <!-- SEARCH / FILTER -->
+
+            <div style="
+                display:flex;
+                gap:10px;
+                align-items:center;
+                margin-bottom:12px;
+                flex-wrap:wrap;">
+
+                <input id="searchRecent"
+                       class="input"
+                       type="search"
+                       placeholder="Search completed orders..."
+                       autocomplete="off"
+                       style="
+                           padding:8px 12px;
+                           border-radius:8px;
+                           border:1px solid #e3d6bf;
+                           background:var(--white);
+                           min-width:240px;
+                           flex:1 1 auto;">
+
+                <select id="filterRecent"
+                        class="select"
+                        style="
+                            padding:8px 10px;
+                            border-radius:8px;
+                            border:1px solid #e3d6bf;
+                            background:var(--white);">
+
+                    <option value="All">
+                        All Completed
+                    </option>
+
+                    <option value="Delivered">
+                        Delivered
+                    </option>
+
+                    <option value="Order Delivered">
+                        Order Delivered
+                    </option>
+
+                    <option value="Completed">
+                        Completed
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- ORDER TABLE -->
+
+            <div class="table-wrap">
+
+                <table aria-describedby="recent-orders">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Order #
+                            </th>
+
+                            <th>
+                                Customer
+                            </th>
+
+                            <th>
+                                Items
+                            </th>
+
+                            <th>
+                                Amount
+                            </th>
+
+                            <th>
+                                Placed
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="recentBody">
+
+                        @if (Model.RecentOrders != null &&
+                                                Model.RecentOrders.Any())
+                        {
+                            foreach (var order in Model.RecentOrders)
+                            {
+                                var customerDisplayName = !string.IsNullOrWhiteSpace(order.CustomerAccount?.Name)
+                                    ? order.CustomerAccount.Name
+                                    : (!string.IsNullOrWhiteSpace(order.Customer) && !order.Customer.Contains("@") ? order.Customer : (order.CustomerAccount?.Name ?? order.Customer));
+                                var itemCount = order.Items?
+                                .Sum(x => x.Qty) ?? 0;
+
+                                <tr data-order-id="@order.Id" data-status="@order.Status">
+
+                                    <!-- ORDER ID -->
+
+                                    <td>
+                                        @order.Id
+                                    </td>
+
+
+                                    <!-- CUSTOMER -->
+
+                                    <td>
+
+                                        <strong>
+                                            @customerDisplayName
+                                        </strong>
+
+                                        @if (!string.IsNullOrWhiteSpace(order.Phone))
+                                        {
+                                            <div style="
+                                                            color:var(--muted);
+                                                            font-size:0.9rem;">
+
+                                                @order.Phone
+
+                                            </div>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ITEMS -->
+
+                                    <td>
+                                        @itemCount item(s)
+                                    </td>
+
+
+                                    <!-- TOTAL -->
+
+                                    <td>
+                                        Rs. @order.Total.ToString("N2")
+                                    </td>
+
+
+                                    <!-- PLACED -->
+
+                                    <td style="color:var(--muted)">
+                                        @(order.PlacedAt.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt"))
+                                    </td>
+
+
+                                    <!-- STATUS -->
+
+                                    <td data-order-status>
+
+                                        <span class="status-badge @StatusClass(order.Status)">
+
+                                            @order.Status
+
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- ACTIONS -->
+
+                                    <td>
+
+                                        <button type="button"
+                                                class="action-btn btn-view"
+                                                data-order-id="@order.Id"
+                                                data-id="@order.Id">
+
+                                            View
+
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+
+                                <td colspan="7"
+                                    style="
+                                            text-align:center;
+                                            padding:30px;
+                                            color:var(--muted);">
+
+                                    No completed orders found yet.
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================================================
+             QUICK ACTIONS
+        ========================================================= -->
+
+        <div class="card">
+
+            <h3>
+                Quick Actions
+            </h3>
+
+
+            <div style="
+                display:flex;
+                flex-direction:column;
+                gap:10px;
+                margin-top:12px;">
+
+
+                <!-- ORDERS -->
+
+                <a asp-controller="Seller"
+                   asp-action="ManageOrders"
+                   style="text-decoration:none;">
+
+                    <button type="button"
+                            style="
+                                width:100%;
+                                padding:10px;
+                                border-radius:8px;
+                                border:none;
+                                background:var(--soft-orange);
+                                color:var(--dark-brown);
+                                font-weight:700;
+                                cursor:pointer;">
+
+                        View All Orders
+
+                    </button>
+
+                </a>
+
+
+                <!-- MENU -->
+
+                <a asp-controller="Seller"
+                   asp-action="MenuManage"
+                   style="text-decoration:none;">
+
+                    <button type="button"
+                            style="
+                                width:100%;
+                                padding:10px;
+                                border-radius:8px;
+                                border:1px solid #f0c784;
+                                background:#fff;
+                                color:var(--dark-brown);
+                                font-weight:700;
+                                cursor:pointer;">
+
+                        Edit Menu
+
+                    </button>
+
+                </a>
+
+
+                <!-- SETTINGS -->
+
+                <a asp-controller="Seller"
+                   asp-action="Setting"
+                   style="text-decoration:none;">
+
+                    <button type="button"
+                            style="
+                                width:100%;
+                                padding:10px;
+                                border-radius:8px;
+                                border:none;
+                                background:#dcdcdc;
+                                color:var(--dark-brown);
+                                font-weight:700;
+                                cursor:pointer;">
+
+                        Store Settings
+
+                    </button>
+
+                </a>
+
+
+                <!-- KITCHEN INFORMATION -->
+
+                <div style="
+                    margin-top:8px;
+                    color:var(--muted);
+                    font-size:0.95rem;">
+
+                    <strong>
+                        Kitchen:
+                    </strong>
+
+                    @Model.KitchenName
+
+                    <br />
+
+                    <strong>
+                        Store Status:
+                    </strong>
+
+                    @Model.StoreStatus
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- ================================================================
+     ORDER DETAILS MODAL
+================================================================ -->
+
+<div id="modalBackdrop"
+     class="modal-backdrop"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="modalTitle"
+     style="display:none;">
+
+    <div class="modal"
+         role="document">
+
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;">
+
+            <h4 id="modalTitle"
+                style="
+                    color:var(--dark-brown);
+                    margin:0;">
+
+                Order Details
+
+            </h4>
+
+
+            <button type="button"
+                    id="closeModal"
+                    class="action-btn"
+                    aria-label="Close order details"
+                    style="
+                        background:#eee;
+                        color:#333;
+                        border-radius:8px;
+                        padding:6px 10px;">
+
+                ✕
+
+            </button>
+
+        </div>
+
+
+        <div id="modalBody"
+             style="margin-top:12px;">
+        </div>
+
+
+        <div style="
+            margin-top:14px;
+            text-align:right;">
+
+            <button type="button"
+                    id="modalCancel"
+                    class="action-btn btn-cancel">
+
+                Cancel Order
+
+            </button>
+
+
+            <button type="button"
+                    id="modalNext"
+                    class="action-btn btn-next">
+
+                Next Status
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>

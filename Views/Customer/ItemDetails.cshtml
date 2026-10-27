@@ -1,0 +1,288 @@
+@model Cloud_Kitchen_web_App.Models.ItemDetailsViewModel
+@{
+    ViewData["Title"] = $"{Model.Name} — Details";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --soft-orange: #FFB347;
+            --beige: #F5E6CA;
+            --light-beige: #F8EEDC;
+            --dark-brown: #5D4037;
+            --muted: #6b6b6b;
+            --white: #fff;
+            --card-shadow: 0 14px 40px rgba(92,64,55,0.08);
+        }
+
+        .detail-container {
+            margin-top: 40px;
+            margin-bottom: 60px;
+        }
+
+        .product-img-holder {
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            height: 450px;
+        }
+
+            .product-img-holder img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .product-details-side {
+            padding-left: 20px;
+        }
+
+        .kitchen-tag-link {
+            color: var(--soft-orange);
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+            .kitchen-tag-link:hover {
+                color: var(--dark-brown);
+            }
+
+        .item-main-title {
+            font-weight: 900;
+            font-size: 2.8rem;
+            color: var(--dark-brown);
+            line-height: 1.2;
+            margin-bottom: 15px;
+        }
+
+        .item-price-tag {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--dark-brown);
+            margin-bottom: 25px;
+        }
+
+        .item-desc-text {
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        /* Interactive Elements Chassis */
+        .quantity-controller {
+            display: flex;
+            align-items: center;
+            background: var(--white);
+            padding: 5px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            width: fit-content;
+        }
+
+        .qty-control-btn {
+            width: 45px;
+            height: 45px;
+            border: none;
+            background: var(--light-beige);
+            color: var(--dark-brown);
+            font-weight: 800;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .qty-control-btn:hover {
+                background: var(--soft-orange);
+            }
+
+        .qty-display {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--dark-brown);
+            padding: 0 25px;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .instructions-field h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark-brown);
+            margin-bottom: 12px;
+        }
+
+        .instructions-field textarea {
+            border-radius: 16px;
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 15px;
+            font-size: 0.95rem;
+            outline: none;
+            resize: none;
+        }
+
+            .instructions-field textarea:focus {
+                border-color: var(--soft-orange);
+                box-shadow: 0 0 0 4px rgba(255,179,71,0.15);
+            }
+
+        .action-buttons-row {
+            margin-top: 35px;
+        }
+
+        .add-to-basket-mega-btn {
+            background: var(--soft-orange);
+            color: var(--dark-brown);
+            border: none;
+            padding: 16px 35px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 8px 25px rgba(255,179,71,0.3);
+            width: 100%;
+        }
+
+            .add-to-basket-mega-btn:hover {
+                background: var(--dark-brown);
+                color: white;
+                box-shadow: 0 8px 25px rgba(93,64,55,0.2);
+            }
+
+        @@media (max-width: 992px) {
+            .product-img-holder
+
+        {
+            height: 320px;
+            margin-bottom: 30px;
+        }
+
+        .product-details-side {
+            padding-left: 0;
+        }
+
+        .item-main-title {
+            font-size: 2.2rem;
+        }
+
+        }
+    </style>
+}
+
+<div class="container detail-container">
+    <div class="mb-4">
+        <a href="/Customer/KitchenMenu?id=@Model.KitchenId" class="text-decoration-none fw-bold" style="color: var(--dark-brown);">
+            <i class="fas fa-arrow-left me-2"></i> Back to Menu
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-lg-6">
+            <div class="product-img-holder">
+                <img src="@Model.Image" alt="@Model.Name">
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="product-details-side">
+                <a href="/Customer/KitchenMenu?id=@Model.KitchenId" class="kitchen-tag-link">
+                    <i class="fas fa-store me-1"></i> @Model.KitchenName
+                </a>
+                <h1 class="item-main-title">@Model.Name</h1>
+                <div class="item-price-tag">Rs. @Model.Price</div>
+                <p class="item-desc-text">@Model.Description</p>
+
+                <hr class="my-4" style="opacity: 0.1;">
+
+                <div class="mb-4">
+                    <h3 class="fs-6 fw-bold mb-3" style="color: var(--dark-brown);">Select Quantity</h3>
+                    <div class="quantity-controller">
+                        <button class="qty-control-btn" onclick="modifyLocalQuantityCounter(-1)">-</button>
+                        <span class="qty-display" id="localQuantityValue">1</span>
+                        <button class="qty-control-btn" onclick="modifyLocalQuantityCounter(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="instructions-field mb-4">
+                    <h3>Special Instructions (Optional)</h3>
+                    <textarea class="form-control" id="specialInstructionsInput" rows="3" placeholder="E.g. Make it spicy, no onions, extra raita etc."></textarea>
+                </div>
+
+                <div class="action-buttons-row">
+                    <button class="add-to-basket-mega-btn" onclick="commitItemToGlobalBasket()">
+                        <i class="fas fa-shopping-basket me-2"></i> Add to Basket — <span id="dynamicPriceCalculationSpan">Rs. @Model.Price</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const itemUnitPrice = parseFloat("@Model.Price");
+        const currentKitchenName = "@Html.Raw(Model.KitchenName)";
+        const currentItemName = "@Html.Raw(Model.Name)";
+        const currentItemImage = "@Model.Image";
+
+        let currentQuantity = 1;
+
+        window.modifyLocalQuantityCounter = function(direction) {
+            currentQuantity += direction;
+            if(currentQuantity < 1) currentQuantity = 1;
+
+            document.getElementById('localQuantityValue').innerText = currentQuantity;
+            document.getElementById('dynamicPriceCalculationSpan').innerText = "Rs. " + (itemUnitPrice * currentQuantity);
+        };
+
+        window.commitItemToGlobalBasket = function() {
+            const instructions = document.getElementById('specialInstructionsInput').value.trim();
+            const storageKey = (typeof window.getCartStorageKey === "function")
+                ? window.getCartStorageKey()
+                : ("kitchenCarts_" + encodeURIComponent((window.currentUserEmail || "guest").trim().toLowerCase()));
+
+            if (localStorage.getItem("kitchenCarts")) {
+                localStorage.removeItem("kitchenCarts");
+            }
+
+            let kitchenCarts = JSON.parse(localStorage.getItem(storageKey)) || {};
+
+            const basketItemPayload = {
+                name: currentItemName,
+                price: itemUnitPrice,
+                img: currentItemImage,
+                kitchen: currentKitchenName,
+                qty: currentQuantity,
+                notes: instructions
+            };
+
+            if (!kitchenCarts[currentKitchenName]) {
+                kitchenCarts[currentKitchenName] = [];
+            }
+
+            const existingItem = kitchenCarts[currentKitchenName].find(i => i.name === basketItemPayload.name);
+            if (existingItem) {
+                existingItem.qty += currentQuantity;
+                if(instructions) {
+                    existingItem.notes = existingItem.notes ? (existingItem.notes + " | " + instructions) : instructions;
+                }
+            } else {
+                kitchenCarts[currentKitchenName].push(basketItemPayload);
+            }
+
+            localStorage.setItem(storageKey, JSON.stringify(kitchenCarts));
+            localStorage.removeItem("kitchenCarts");
+
+            // Feedback showing it's added successfully
+            alert(`${currentQuantity}x ${currentItemName} added to your basket!`);
+            window.location.href = `/Customer/KitchenMenu?id=@Model.KitchenId`;
+        };
+    </script>
+}

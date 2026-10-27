@@ -1,0 +1,54 @@
+@model CloudKitchen.Controllers.CustomerController.ChangePasswordViewModel
+@{
+    ViewData["Title"] = "Manage Security";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+<div class="customer-settings-page">
+    <div class="settings-header">
+        <h2>
+            <i class="fas fa-shield-alt"></i>
+            Manage Security
+        </h2>
+        <p>Update your password to keep your account secure</p>
+    </div>
+
+    <div class="settings-container" style="max-width: 600px; margin: 0 auto;">
+        
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success" style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                @TempData["Success"]
+            </div>
+        }
+
+        <div class="settings-card" style="padding: 30px;">
+            <form asp-controller="Customer" asp-action="ManageSecurity" method="post">
+                <div asp-validation-summary="All" class="text-danger" style="color: #dc3545; margin-bottom: 20px; font-weight: bold; list-style: none;"></div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #555;">Current Password</label>
+                    <input asp-for="OldPassword" type="password" class="form-control" placeholder="Enter current password" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;" required>
+                    <span asp-validation-for="OldPassword" class="text-danger" style="color: #dc3545; font-size: 13px;"></span>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #555;">New Password</label>
+                    <input asp-for="NewPassword" type="password" class="form-control" placeholder="Enter new password" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;" required>
+                    <span asp-validation-for="NewPassword" class="text-danger" style="color: #dc3545; font-size: 13px;"></span>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #555;">Confirm New Password</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm new password" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;" required>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger" style="color: #dc3545; font-size: 13px;"></span>
+                </div>
+
+                <div style="display: flex; gap: 15px;">
+                    <a asp-action="Settings" class="btn btn-secondary" style="padding: 12px 24px; border-radius: 8px; text-decoration: none; color: #555; background-color: #f1f1f1; border: none; font-weight: bold; flex: 1; text-align: center;">Cancel</a>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 24px; border-radius: 8px; color: #fff; background-color: #5D4037; border: none; font-weight: bold; flex: 1;">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

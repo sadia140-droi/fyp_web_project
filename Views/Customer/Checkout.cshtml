@@ -1,0 +1,1182 @@
+@model Cloud_Kitchen_web_App.Models.CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Checkout";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --soft-orange: #FFB347;
+            --dark-brown: #3E2723;
+            --beige: #FDF5E6;
+            --white: #ffffff;
+            --text-main: #1A1A1A;
+            --text-muted: #666666;
+            --border-color: #EEEEEE;
+        }
+
+        .checkout-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark-brown);
+        }
+
+        .form-control,
+        .form-select {
+            padding: 14px;
+            border-radius: 14px;
+            border: 1.5px solid var(--border-color);
+            background-color: #fafafa;
+            font-family: inherit;
+        }
+
+            .form-control:focus,
+            .form-select:focus {
+                border-color: var(--soft-orange);
+                background-color: #fff;
+                box-shadow: 0 0 0 4px rgba(255, 179, 71, 0.15);
+            }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        .pay-tile {
+            border: 2px solid var(--soft-orange);
+            border-radius: 18px;
+            padding: 20px;
+            text-align: center;
+            background: #fffcf5;
+            color: var(--dark-brown);
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 15px rgba(255, 179, 71, 0.1);
+        }
+
+            .pay-tile i {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+                display: block;
+                color: var(--soft-orange);
+            }
+
+        .summary-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 25px;
+            position: sticky;
+            top: 100px;
+            border: 1.5px solid var(--soft-orange);
+            box-shadow: 0 15px 40px rgba(255, 179, 71, 0.15);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .summary-item-name {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .summary-item-price {
+            white-space: nowrap;
+            font-weight: 700;
+        }
+
+        .total-row {
+            border-top: 2px dashed #eee;
+            margin-top: 20px;
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--dark-brown);
+        }
+
+        .order-btn {
+            width: 100%;
+            background: var(--dark-brown);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 18px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin-top: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 10px 20px rgba(62,39,35,0.2);
+            transition: 0.3s;
+        }
+
+            .order-btn:hover {
+                transform: translateY(-3px);
+                background: #4e362d;
+            }
+
+            .order-btn:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .checkout-error {
+            border-radius: 14px;
+        }
+
+        .server-note {
+            font-size: 0.78rem;
+            color: #777;
+            line-height: 1.5;
+        }
+    </style>
+}
+
+<div class="container my-5">
+
+    <form id="checkoutForm"
+          asp-action="PlaceOrder"
+          asp-controller="Customer"
+          method="post"
+          class="needs-validation"
+          novalidate>
+
+        @Html.AntiForgeryToken()
+
+        <!-- =====================================================
+             IMPORTANT SERVER-SIDE VALUES
+             ===================================================== -->
+
+        <input type="hidden"
+               asp-for="KitchenId"
+               id="hiddenKitchenId" />
+
+        <input type="hidden"
+               asp-for="KitchenName"
+               id="hiddenKitchenName" />
+
+        <input type="hidden"
+               asp-for="CustomerLatitude"
+               id="hiddenCustomerLatitude" />
+
+        <input type="hidden"
+               asp-for="CustomerLongitude"
+               id="hiddenCustomerLongitude" />
+
+        <input type="hidden"
+               asp-for="PaymentMethod"
+               id="hiddenPaymentMethod"
+               value="COD" />
+
+        <!--
+            CartJson is only a transport value.
+
+            IMPORTANT:
+            CustomerController.PlaceOrder() DOES NOT trust
+            prices, names, totals or delivery fee from this JSON.
+
+            It receives MenuItemId + Qty and gets actual
+            MenuItem data from SQL Server.
+        -->
+        <input type="hidden"
+               asp-for="CartJson"
+               id="cartJson" />
+
+        <!-- Display-only total -->
+        <input type="hidden"
+               asp-for="TotalAmount"
+               id="hiddenTotalAmount" />
+
+        <div class="row g-4">
+
+            <!-- =================================================
+                 LEFT SIDE
+                 ================================================= -->
+
+            <div class="col-12 col-lg-7 col-xl-8">
+
+                <!-- DELIVERY INFORMATION -->
+                <div class="checkout-card mb-4">
+
+                    <div class="section-title">
+                        <i class="fas fa-truck"></i>
+                        Delivery Information
+                    </div>
+
+                    <div class="row g-3">
+
+                        <!-- Receiver -->
+                        <div class="col-12 col-md-6">
+
+                            <label asp-for="ReceiverName">
+                                Receiver's Name
+                            </label>
+
+                            <input type="text"
+                                   asp-for="ReceiverName"
+                                   class="form-control"
+                                   maxlength="200"
+                                   autocomplete="name"
+                                   placeholder="Enter your full name"
+                                   required />
+
+                            <span asp-validation-for="ReceiverName"
+                                  class="text-danger small"></span>
+
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="col-12 col-md-6">
+
+                            <label asp-for="PhoneNumber">
+                                Phone Number
+                            </label>
+
+                            <input type="tel"
+                                   asp-for="PhoneNumber"
+                                   class="form-control"
+                                   maxlength="50"
+                                   autocomplete="tel"
+                                   placeholder="03xxxxxxxxx"
+                                   required />
+
+                            <span asp-validation-for="PhoneNumber"
+                                  class="text-danger small"></span>
+
+                        </div>
+
+                        <!-- Address -->
+                        <div class="col-12">
+
+                            <label asp-for="DeliveryAddress">
+                                Full Delivery Address
+                            </label>
+
+                            <textarea asp-for="DeliveryAddress"
+                                      class="form-control"
+                                      rows="3"
+                                      maxlength="500"
+                                      autocomplete="street-address"
+                                      placeholder="Street, House No, Sector Name..."
+                                      required></textarea>
+
+                            <span asp-validation-for="DeliveryAddress"
+                                  class="text-danger small"></span>
+
+                        </div>
+
+                        <!-- Landmark -->
+                        <div class="col-12 col-md-6">
+
+                            <label asp-for="Landmark">
+                                Nearest Landmark
+                            </label>
+
+                            <input type="text"
+                                   asp-for="Landmark"
+                                   class="form-control"
+                                   maxlength="200"
+                                   placeholder="e.g. Near ABC Mosque" />
+
+                            <span asp-validation-for="Landmark"
+                                  class="text-danger small"></span>
+
+                        </div>
+
+                        <!-- Rider instruction -->
+                        <div class="col-12 col-md-6">
+
+                            <label asp-for="RiderInstruction">
+                                Instruction for Rider
+                            </label>
+
+                            <input type="text"
+                                   asp-for="RiderInstruction"
+                                   class="form-control"
+                                   maxlength="500"
+                                   placeholder="e.g. Call before arrival" />
+
+                            <span asp-validation-for="RiderInstruction"
+                                  class="text-danger small"></span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PAYMENT -->
+                <div class="checkout-card">
+
+                    <div class="section-title">
+                        <i class="fas fa-wallet"></i>
+                        Payment Method
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-12 col-md-6 mx-auto">
+
+                            <div class="pay-tile">
+
+                                <i class="fas fa-money-bill-wave"></i>
+
+                                Cash on Delivery (COD)
+
+                                <div class="text-muted small mt-1"
+                                     style="font-weight:400;">
+
+                                    Pay the order amount in cash
+                                    when your order is delivered.
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 RIGHT SIDE
+                 ================================================= -->
+
+            <div class="col-12 col-lg-5 col-xl-4">
+
+                <div class="summary-card">
+
+                    <div class="section-title"
+                         style="font-size:1.1rem;">
+
+                        <i class="fas fa-receipt"></i>
+                        Order Summary
+
+                    </div>
+
+
+                    <!-- Server error messages -->
+                    <div asp-validation-summary="ModelOnly"
+                         class="alert alert-danger checkout-error mb-4"
+                         role="alert">
+                    </div>
+
+
+                    <!-- Kitchen -->
+                    <div class="mb-3">
+
+                        <div class="text-muted small">
+                            Kitchen
+                        </div>
+
+                        <div id="checkoutKitchenName"
+                             class="fw-bold">
+                            @Model.KitchenName
+                        </div>
+
+                    </div>
+
+
+                    <!-- Items -->
+                    <div id="invoiceItemsList">
+
+                        <div class="text-muted small">
+                            Loading cart...
+                        </div>
+
+                    </div>
+
+
+                    <!-- Subtotal -->
+                    <div class="summary-row mt-4"
+                         style="color:#666;">
+
+                        <span>
+                            Subtotal
+                        </span>
+
+                        <span id="subtotalVal">
+                            Rs. 0
+                        </span>
+
+                    </div>
+
+
+                    <!-- Delivery -->
+                    <div class="summary-row"
+                         style="color:#27ae60;font-weight:600;">
+
+                        <span>
+                            Delivery Fee
+                        </span>
+
+                        <span id="deliveryVal">
+                            Calculated at order placement
+                        </span>
+
+                    </div>
+
+
+                    <!-- Total -->
+                    <div class="total-row">
+
+                        <span>
+                            Total Amount
+                        </span>
+
+                        <span id="grandTotalVal">
+                            Calculated at order placement
+                        </span>
+
+                    </div>
+
+
+                    <div class="server-note mt-3">
+
+                        Final item prices, item availability,
+                        minimum order requirement, delivery distance,
+                        delivery fee and total amount are validated
+                        by the server using the actual database data.
+
+                    </div>
+
+
+                    <!-- Submit -->
+                    <button type="submit"
+                            class="order-btn"
+                            id="placeOrderBtn">
+
+                        <i class="fas fa-shopping-basket"></i>
+
+                        Place Order (COD)
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        /*
+         * ============================================================
+         * CUSTOMER CHECKOUT
+         * ============================================================
+         *
+         * IMPORTANT:
+         *
+         * LocalStorage is used ONLY to carry the current browser cart
+         * into the MVC checkout POST.
+         *
+         * It is NOT trusted for:
+         * - price
+         * - total
+         * - delivery fee
+         * - kitchen ownership
+         * - item availability
+         *
+         * CustomerController.PlaceOrder() gets all authoritative
+         * information from SQL Server.
+         */
+
+
+        const checkoutKitchenId =
+            Number(
+                document.getElementById("hiddenKitchenId")?.value || 0
+            );
+
+
+        const checkoutKitchenName =
+            document.getElementById("hiddenKitchenName")?.value || "";
+
+        const checkoutKitchenDeliveryRate = Number(@Model.DeliveryRatePerKm) || 30;
+        const checkoutKitchenLat = Number(@Model.KitchenLat) || 0;
+        const checkoutKitchenLng = Number(@Model.KitchenLng) || 0;
+
+
+        const checkoutForm =
+            document.getElementById("checkoutForm");
+
+
+        const cartJsonInput =
+            document.getElementById("cartJson");
+
+
+        const invoiceItemsList =
+            document.getElementById("invoiceItemsList");
+
+
+        const subtotalVal =
+            document.getElementById("subtotalVal");
+
+
+        const deliveryVal =
+            document.getElementById("deliveryVal");
+
+
+        const grandTotalVal =
+            document.getElementById("grandTotalVal");
+
+
+        const totalAmountInput =
+            document.getElementById("hiddenTotalAmount");
+
+
+        const placeOrderBtn =
+            document.getElementById("placeOrderBtn");
+
+
+        /*
+         * ============================================================
+         * SAFE JSON READ
+         * ============================================================
+         */
+
+        function getStoredCarts() {
+
+            try {
+                const storageKey = (typeof window.getCartStorageKey === "function")
+                    ? window.getCartStorageKey()
+                    : ("kitchenCarts_" + encodeURIComponent((window.currentUserEmail || "guest").trim().toLowerCase()));
+
+                if (localStorage.getItem("kitchenCarts")) {
+                    localStorage.removeItem("kitchenCarts");
+                }
+
+                const raw = localStorage.getItem(storageKey);
+
+                if (!raw) {
+                    return {};
+                }
+
+                const parsed =
+                    JSON.parse(raw);
+
+                if (!parsed || typeof parsed !== "object") {
+                    return {};
+                }
+
+                return parsed;
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Unable to read cart:",
+                    error
+                );
+
+                return {};
+
+            }
+
+        }
+
+
+        /*
+         * ============================================================
+         * FIND CURRENT KITCHEN CART
+         * ============================================================
+         *
+         * Supports the current kitchenId-based cart structure.
+         *
+         * It also safely checks item.kitchenId so an old browser cart
+         * does not accidentally get submitted for another kitchen.
+         */
+
+        function getCurrentKitchenCart() {
+
+            const storedCarts =
+                getStoredCarts();
+
+
+            if (checkoutKitchenId <= 0) {
+                return [];
+            }
+
+
+            /*
+             * Case 1:
+             *
+             * kitchenCarts:
+             * {
+             *   "12": [...]
+             * }
+             */
+
+            const directCart =
+                storedCarts[String(checkoutKitchenId)];
+
+
+            if (Array.isArray(directCart)) {
+
+                return directCart;
+
+            }
+
+
+            /*
+             * Case 2:
+             *
+             * kitchenCarts may still be keyed by kitchen name.
+             *
+             * We only accept it if the actual items contain
+             * the correct kitchenId.
+             */
+
+            for (const key of Object.keys(storedCarts)) {
+
+                const candidate =
+                    storedCarts[key];
+
+
+                if (!Array.isArray(candidate)) {
+                    continue;
+                }
+
+
+                const matchingItems =
+                    candidate.filter(item => {
+
+                        return Number(item?.kitchenId) ===
+                            checkoutKitchenId;
+
+                    });
+
+
+                if (matchingItems.length > 0) {
+
+                    return matchingItems;
+
+                }
+
+            }
+
+
+            return [];
+
+        }
+
+
+        /*
+         * ============================================================
+         * NORMALIZE CART
+         * ============================================================
+         *
+         * Only menuItemId + qty are sent to the server.
+         *
+         * Price/name/image are NOT sent as authoritative values.
+         */
+
+        function normalizeCartItems(items) {
+
+            if (!Array.isArray(items)) {
+                return [];
+            }
+
+
+            const normalized = [];
+
+
+            for (const item of items) {
+
+                /*
+                 * Current structure uses menuItemId.
+                 *
+                 * The id fallback is only for compatibility with
+                 * an older browser cart.
+                 */
+
+                const menuItemId =
+                    Number(
+                        item?.menuItemId ??
+                        item?.id ??
+                        0
+                    );
+
+
+                const qty =
+                    Number(
+                        item?.qty ?? 0
+                    );
+
+
+                if (!Number.isInteger(menuItemId) ||
+                    menuItemId <= 0) {
+
+                    continue;
+
+                }
+
+
+                if (!Number.isInteger(qty) ||
+                    qty < 1 ||
+                    qty > 100) {
+
+                    continue;
+
+                }
+
+
+                normalized.push({
+
+                    menuItemId: menuItemId,
+
+                    qty: qty
+
+                });
+
+            }
+
+
+            return normalized;
+
+        }
+
+
+        /*
+         * ============================================================
+         * HTML ESCAPE
+         * ============================================================
+         */
+
+        function escapeHtml(value) {
+
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+
+        /*
+         * ============================================================
+         * BUILD CHECKOUT PREVIEW
+         * ============================================================
+         *
+         * This preview uses the browser cart's display values only.
+         *
+         * The server does NOT trust these prices.
+         */
+
+        function loadCheckoutInvoice() {
+
+            const rawCart =
+                getCurrentKitchenCart();
+
+
+            const cartItems =
+                normalizeCartItems(rawCart);
+
+
+            /*
+             * Empty cart
+             */
+
+            if (cartItems.length === 0) {
+
+                invoiceItemsList.innerHTML = `
+                    <div class="alert alert-warning mb-0">
+                        Your cart is empty.
+                    </div>
+                `;
+
+
+                subtotalVal.innerText =
+                    "Rs. 0";
+
+
+                deliveryVal.innerText =
+                    "Not available";
+
+
+                grandTotalVal.innerText =
+                    "Not available";
+
+
+                cartJsonInput.value =
+                    "[]";
+
+
+                placeOrderBtn.disabled =
+                    true;
+
+
+                return;
+
+            }
+
+
+            /*
+             * IMPORTANT:
+             *
+             * Send ONLY:
+             * menuItemId + qty
+             */
+
+            cartJsonInput.value =
+                JSON.stringify(cartItems);
+
+
+            invoiceItemsList.innerHTML =
+                "";
+
+
+            let displaySubtotal = 0;
+
+
+            rawCart.forEach(item => {
+
+                const menuItemId =
+                    Number(
+                        item?.menuItemId ??
+                        item?.id ??
+                        0
+                    );
+
+
+                const qty =
+                    Number(
+                        item?.qty ?? 0
+                    );
+
+
+                if (menuItemId <= 0 ||
+                    qty < 1) {
+
+                    return;
+
+                }
+
+
+                /*
+                 * These are display values only.
+                 * Server will recalculate using SQL Server.
+                 */
+
+                const displayPrice =
+                    Number(item?.price);
+
+
+                const hasValidDisplayPrice =
+                    Number.isFinite(displayPrice) &&
+                    displayPrice >= 0;
+
+
+                if (hasValidDisplayPrice) {
+
+                    displaySubtotal +=
+                        displayPrice * qty;
+
+                }
+
+
+                const name =
+                    escapeHtml(
+                        item?.name || "Menu Item"
+                    );
+
+
+                const priceText =
+                    hasValidDisplayPrice
+                        ? `Rs. ${(displayPrice * qty).toFixed(2)}`
+                        : "Price verified at order placement";
+
+
+                const row =
+                    document.createElement("div");
+
+
+                row.className =
+                    "summary-row";
+
+
+                row.innerHTML = `
+                    <span class="summary-item-name">
+                        ${name}
+                        <b class="text-muted">
+                            x${qty}
+                        </b>
+                    </span>
+
+                    <span class="summary-item-price">
+                        ${priceText}
+                    </span>
+                `;
+
+
+                invoiceItemsList.appendChild(row);
+
+            });
+
+
+            /*
+             * Display subtotal is only a browser preview.
+             *
+             * We DO NOT use it as the final order total.
+             */
+
+            if (displaySubtotal > 0) {
+
+                subtotalVal.innerText =
+                    `Rs. ${displaySubtotal.toFixed(2)}`;
+
+            }
+            else {
+
+                subtotalVal.innerText =
+                    "Verified at order placement";
+
+            }
+
+
+            /*
+             * Dynamic per-kilometer delivery fee calculation
+             */
+            let custLat = parseFloat(document.getElementById("hiddenCustomerLatitude")?.value || "0");
+            let custLng = parseFloat(document.getElementById("hiddenCustomerLongitude")?.value || "0");
+
+            if (!custLat || !custLng) {
+                custLat = parseFloat(localStorage.getItem("userLat") || sessionStorage.getItem("userLat") || "0");
+                custLng = parseFloat(localStorage.getItem("userLng") || sessionStorage.getItem("userLng") || "0");
+                if (custLat && custLng) {
+                    if (document.getElementById("hiddenCustomerLatitude")) document.getElementById("hiddenCustomerLatitude").value = custLat;
+                    if (document.getElementById("hiddenCustomerLongitude")) document.getElementById("hiddenCustomerLongitude").value = custLng;
+                }
+            }
+
+            let distanceKm = 3.2; // default intra-city distance fallback
+            if (custLat !== 0 && custLng !== 0 && checkoutKitchenLat !== 0 && checkoutKitchenLng !== 0) {
+                const R = 6371;
+                const dLat = (checkoutKitchenLat - custLat) * Math.PI / 180;
+                const dLon = (checkoutKitchenLng - custLng) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(custLat * Math.PI / 180) * Math.cos(checkoutKitchenLat * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                const d = R * c;
+                if (d > 0 && d < 100) {
+                    distanceKm = Math.round(d * 10) / 10;
+                }
+            }
+
+            const calculatedFee = Math.max(40, Math.round(distanceKm * checkoutKitchenDeliveryRate));
+
+            deliveryVal.innerText =
+                `Rs. ${calculatedFee} (${distanceKm.toFixed(1)} km @@ Rs. ${checkoutKitchenDeliveryRate}/km)`;
+
+            if (displaySubtotal > 0) {
+                const finalTotal = displaySubtotal + calculatedFee;
+                grandTotalVal.innerText = `Rs. ${finalTotal.toFixed(2)}`;
+                totalAmountInput.value = finalTotal.toFixed(2);
+            } else {
+                grandTotalVal.innerText = `Rs. ${calculatedFee.toFixed(2)}`;
+                totalAmountInput.value = calculatedFee.toFixed(2);
+            }
+
+            placeOrderBtn.disabled =
+                false;
+
+            // Try getting precise GPS if not yet available
+            if (navigator.geolocation && (!custLat || !custLng)) {
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    document.getElementById("hiddenCustomerLatitude").value = pos.coords.latitude;
+                    document.getElementById("hiddenCustomerLongitude").value = pos.coords.longitude;
+                    localStorage.setItem("userLat", pos.coords.latitude);
+                    localStorage.setItem("userLng", pos.coords.longitude);
+                    loadCheckoutInvoice();
+                }, function () {});
+            }
+
+        }
+
+
+        /*
+         * ============================================================
+         * FORM SUBMIT
+         * ============================================================
+         */
+
+        checkoutForm.addEventListener(
+            "submit",
+            function (event) {
+
+                /*
+                 * Client-side validation
+                 */
+
+                if (!checkoutForm.checkValidity()) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    checkoutForm.classList.add(
+                        "was-validated"
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                 * Re-read LocalStorage immediately before POST.
+                 *
+                 * This prevents submitting an outdated cart preview.
+                 */
+
+                const latestRawCart =
+                    getCurrentKitchenCart();
+
+
+                const latestCart =
+                    normalizeCartItems(
+                        latestRawCart
+                    );
+
+
+                if (latestCart.length === 0) {
+
+                    event.preventDefault();
+
+                    alert(
+                        "Your cart is empty. Please add items before placing the order."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                 * Make sure kitchen ID exists.
+                 */
+
+                if (checkoutKitchenId <= 0) {
+
+                    event.preventDefault();
+
+                    alert(
+                        "Kitchen information is missing. Please return to the kitchen menu."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                 * Send only IDs + quantities.
+                 *
+                 * CustomerController.PlaceOrder()
+                 * gets the actual prices from SQL Server.
+                 */
+
+                cartJsonInput.value =
+                    JSON.stringify(latestCart);
+
+
+                /*
+                 * Payment is currently COD only.
+                 */
+
+                document.getElementById(
+                    "hiddenPaymentMethod"
+                ).value = "COD";
+
+
+                /*
+                 * Prevent double-click / duplicate POST.
+                 */
+
+                placeOrderBtn.disabled =
+                    true;
+
+
+                placeOrderBtn.innerHTML =
+                    `
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    Placing Order...
+                    `;
+
+
+                /*
+                 * DO NOT call preventDefault().
+                 *
+                 * Normal MVC POST:
+                 *
+                 * Checkout.cshtml
+                 *       ↓
+                 * CustomerController.PlaceOrder()
+                 *       ↓
+                 * SQL Server
+                 */
+
+            }
+        );
+
+
+        /*
+         * ============================================================
+         * INITIALIZE
+         * ============================================================
+         */
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                loadCheckoutInvoice();
+
+            }
+        );
+
+    </script>
+}

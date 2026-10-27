@@ -1,0 +1,160 @@
+@model Cloud_Kitchen_web_App.Models.NotificationViewModel
+
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = "~/Views/Shared/_SellerLayout.cshtml";
+
+    var unreadCount = Model?.Notifications?
+        .Count(n => !string.Equals(n.Status, "Read", StringComparison.OrdinalIgnoreCase)) ?? 0;
+}
+
+<main class="main-content">
+
+    <div class="profile-box">
+        <div class="profile-avatar-letter" title="Notifications"><i class="fa-solid fa-bell"></i></div>
+
+        <div class="meta">
+            <div class="name">Seller Notifications</div>
+            <div class="role">Kitchen Notifications</div>
+        </div>
+
+        <div style="margin-left:auto">
+            <span class="badge" id="unreadCount">
+                @unreadCount
+            </span>
+        </div>
+    </div>
+
+    <div class="card">
+
+        <div class="top-actions">
+
+            <button type="button"
+                    id="btnAll"
+                    class="btn">
+                All
+            </button>
+
+            <button type="button"
+                    id="btnUnread"
+                    class="btn btn-mark">
+                Unread
+            </button>
+
+            <input type="text"
+                   id="searchNote"
+                   class="input"
+                   placeholder="Search notifications..."
+                   style="min-width:220px;margin-left:auto">
+
+            <button type="button"
+                    id="btnClear"
+                    class="btn btn-del">
+                Clear All
+            </button>
+
+        </div>
+
+        <div class="list" id="notesList">
+
+            @if (Model?.Notifications != null &&
+                        Model.Notifications.Any())
+            {
+                foreach (var notification in Model.Notifications)
+                {
+                    var isUnread = !string.Equals(
+                    notification.Status,
+                    "Read",
+                    StringComparison.OrdinalIgnoreCase);
+
+                    <div class="note @(isUnread ? "unread" : "")"
+                         data-status="@(isUnread ? "Unread" : "Read")"
+                         data-search="@($"{notification.Title} {notification.Body}")"
+                         data-id="@notification.Id">
+                         
+                        <div class="dot" style="width:10px;height:10px;border-radius:50%;background:@(isUnread ? "#e67e00" : "#ccc");margin-top:6px"></div>
+                        
+                        <div class="text">
+                            <strong>@notification.Title</strong>
+                            <div style="margin-top:6px;color:var(--muted)">@notification.Body</div>
+                        </div>
+
+                        <div style="text-align:right">
+                            <div class="time">
+                                @notification.Time.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
+                            </div>
+                            @if (!string.IsNullOrEmpty(notification.Link))
+                            {
+                                <div class="actions" style="margin-top:8px">
+                                    <a href="@notification.Link" style="text-decoration:none"><button type="button" class="btn">Open</button></a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="text-align:center;padding:18px;color:#666">
+                    No notifications
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</main>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const notes = Array.from(
+            document.querySelectorAll(".note")
+        );
+
+        const btnAll = document.getElementById("btnAll");
+        const btnUnread = document.getElementById("btnUnread");
+        const searchInput = document.getElementById("searchNote");
+
+        function filterNotifications(mode) {
+
+            const search =
+                (searchInput.value || "").trim().toLowerCase();
+
+            notes.forEach(function (note) {
+
+                const status =
+                    note.dataset.status || "";
+
+                const text =
+                    note.dataset.search || "";
+
+                const matchesStatus =
+                    mode === "all" ||
+                    (mode === "unread" && status === "Unread");
+
+                const matchesSearch =
+                    text.toLowerCase().includes(search);
+
+                note.style.display =
+                    matchesStatus && matchesSearch
+                        ? ""
+                        : "none";
+            });
+        }
+
+        btnAll?.addEventListener("click", function () {
+            filterNotifications("all");
+        });
+
+        btnUnread?.addEventListener("click", function () {
+            filterNotifications("unread");
+        });
+
+        searchInput?.addEventListener("input", function () {
+            filterNotifications("all");
+        });
+
+    });
+</script>

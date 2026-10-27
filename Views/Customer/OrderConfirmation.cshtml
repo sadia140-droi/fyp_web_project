@@ -1,0 +1,182 @@
+@model Cloud_Kitchen_web_App.Models.OrderConfirmationViewModel
+@{
+    ViewData["Title"] = "Waiting for Confirmation";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --soft-orange: #FFB347;
+            --dark-brown: #3E2723;
+            --white: #ffffff;
+            --bg: #fcfcfc;
+        }
+
+        .confirmation-wrapper {
+            max-width: 500px;
+            margin: 60px auto;
+            text-align: center;
+        }
+
+        .status-box {
+            background: var(--white);
+            border-radius: 28px;
+            padding: 40px 30px;
+            box-shadow: 0 15px 45px rgba(62, 39, 35, 0.06);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        /* Continuous Loading Spinner Animation */
+        .loader-ring {
+            width: 80px;
+            height: 80px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--soft-orange);
+            border-radius: 50%;
+            animation: spinCircle 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+
+        /* Success Confirmed Checkmark Icon */
+        .success-icon-box {
+            width: 80px;
+            height: 80px;
+            background: #27ae60;
+            color: white;
+            border-radius: 50%;
+            display: none; /* Controlled dynamically via JS */
+            line-height: 80px;
+            font-size: 36px;
+            margin: 0 auto 30px;
+            box-shadow: 0 8px 20px rgba(39,174,96,0.3);
+        }
+
+        @@keyframes spinCircle {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-box h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--dark-brown);
+            margin-bottom: 12px;
+        }
+
+        .status-box p {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .btn-track {
+            display: none; /* Controlled dynamically via JS */
+            background: var(--dark-brown);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-weight: 800;
+            text-decoration: none;
+            box-shadow: 0 8px 20px rgba(62,39,35,0.2);
+            transition: 0.3s;
+        }
+
+            .btn-track:hover {
+                background: #50342b;
+                color: white;
+                transform: translateY(-2px);
+            }
+    </style>
+}
+
+<div class="container">
+    <div class="confirmation-wrapper">
+        <div class="status-box">
+            <div class="loader-ring" id="loaderAnimationRing"></div>
+
+            <div class="success-icon-box" id="successIconBox">
+                <i class="fas fa-check"></i>
+            </div>
+
+            <h2 id="msgStateTitle">Waiting for Kitchen Response...</h2>
+            <p id="msgStateDesc">We are sharing your order specifications with <b>@Model.KitchenName</b> for live approval. Please do not refresh this window.</p>
+
+            <a href="/Customer/OrderHistory" class="btn-track" id="trackOrderActionBtn">Track My Order</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const selectedTargetKitchen = "@Html.Raw(Model.KitchenName)";
+
+        function executeSellerDashboardStatusChecker() {
+            // Seller Dashboard se status read karega via LocalStorage
+            let orderStatus = localStorage.getItem('orderStatus') || 0;
+            orderStatus = parseInt(orderStatus);
+
+            // If Status is 1 (Accepted or Cook Verified by Kitchen Owner)
+            if (orderStatus >= 1) {
+                document.getElementById('loaderAnimationRing').style.display = 'none';
+                document.getElementById('successIconBox').style.display = 'block';
+
+                document.getElementById('msgStateTitle').innerText = "Order Confirmed!";
+                document.getElementById('msgStateDesc').innerHTML = `<b>${selectedTargetKitchen}</b> has accepted your direct request pipeline and started preparing your homemade meal!`;
+
+                // Display tracking action context element
+                const trackBtn = document.getElementById('trackOrderActionBtn');
+                if(trackBtn) trackBtn.style.display = 'inline-block';
+            }
+        }
+
+        // Live structural verification loop checks conditions every 1.5 seconds
+        const systemLoopChecker = setInterval(() => {
+            executeSellerDashboardStatusChecker();
+
+            if (parseInt(localStorage.getItem('orderStatus')) >= 1) {
+                clearInterval(systemLoopChecker);
+            }
+        }, 1500);
+
+        // Initial launch phase trigger execution
+        window.onload = () => {
+            try {
+                const userKey = (typeof window.getCartStorageKey === "function") 
+                    ? window.getCartStorageKey() 
+                    : ("kitchenCarts_" + encodeURIComponent((window.currentUserEmail || "guest").trim().toLowerCase()));
+                
+                const selectedKitchen = localStorage.getItem("selectedCheckoutKitchen") || sessionStorage.getItem("selectedCheckoutKitchen");
+                if (selectedKitchen) {
+                    let cart = {};
+                    try {
+                        cart = JSON.parse(localStorage.getItem(userKey)) || {};
+                    } catch(e) {}
+                    if (cart[selectedKitchen]) {
+                        delete cart[selectedKitchen];
+                    }
+                    if (Object.keys(cart).length === 0) {
+                        localStorage.removeItem(userKey);
+                    } else {
+                        localStorage.setItem(userKey, JSON.stringify(cart));
+                    }
+                } else {
+                    localStorage.removeItem(userKey);
+                }
+                localStorage.removeItem("kitchenCarts");
+                localStorage.removeItem("selectedCheckoutKitchen");
+                sessionStorage.removeItem("selectedCheckoutKitchen");
+            } catch (e) {
+                console.error("Cart clear error:", e);
+            }
+            
+            executeSellerDashboardStatusChecker();
+        };
+    </script>
+}

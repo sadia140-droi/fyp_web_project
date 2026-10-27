@@ -1,0 +1,473 @@
+@model Cloud_Kitchen_web_App.Models.AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/Admin.cshtml";
+}
+
+<style>
+    /* ============================================================
+       DASHBOARD STYLES
+       ============================================================ */
+
+    .page-title {
+        color: var(--dark-brown);
+        font-size: 30px;
+        font-weight: 700;
+        margin-bottom: 25px;
+    }
+
+    /* CARDS */
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 22px;
+        margin-bottom: 35px;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 25px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 10px 30px rgba(93, 64, 55, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(255, 179, 71, 0.2);
+    }
+
+    .card i {
+        font-size: 32px;
+        width: 65px;
+        height: 65px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(255,179,71,0.2), rgba(255,179,71,0.05));
+        color: var(--orange-dark);
+    }
+
+    .card h3 {
+        font-size: 14px;
+        color: #888;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .card p {
+        font-size: 26px;
+        color: var(--dark-brown);
+        font-weight: 700;
+    }
+
+    /* RECENT ORDERS */
+    .recent-orders {
+        background: #fff;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(93, 64, 55, 0.08);
+    }
+
+    .recent-orders h2 {
+        color: var(--dark-brown);
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    /* TABLE */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: rgba(255,179,71,0.1);
+        color: var(--dark-brown);
+        font-size: 13px;
+        font-weight: 600;
+        text-align: left;
+        padding: 14px 18px;
+        border-radius: 8px 8px 0 0;
+    }
+
+    td {
+        padding: 16px 18px;
+        color: #555;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 1px solid #eee;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+    
+    tr:hover td {
+        background: #faf8f5;
+    }
+
+    /* STATUS PILLS */
+    .status {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status.pending { background: #fff3cd; color: #856404; }
+    .status.preparing { background: #cce5ff; color: #004085; }
+    .status.delivered { background: #d4edda; color: #155724; }
+    .status.cancelled { background: #f8d7da; color: #721c24; }
+
+    /* EMPTY ORDERS */
+    .empty-orders {
+        text-align: center;
+        padding: 50px 0;
+        color: #999;
+    }
+
+    .empty-orders i {
+        font-size: 45px;
+        color: #ddd;
+        margin-bottom: 15px;
+    }
+
+    .empty-orders h3 {
+        font-size: 18px;
+        color: var(--dark-brown);
+        margin-bottom: 5px;
+    }
+    
+    /* CHARTS */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 22px;
+        margin-bottom: 35px;
+    }
+
+    .chart-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(93, 64, 55, 0.08);
+        position: relative;
+        min-height: 300px;
+    }
+
+    .chart-card h2 {
+        color: var(--dark-brown);
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 250px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .empty-chart {
+        color: #999;
+        font-size: 14px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    @@media (max-width: 900px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @@media (max-width: 1100px) {
+        .cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @@media (max-width: 700px) {
+        .cards {
+            grid-template-columns: 1fr;
+        }
+        .recent-orders {
+            overflow-x: auto;
+        }
+    }
+</style>
+
+<h1 class="page-title">Dashboard</h1>
+
+<div class="cards">
+
+    <!-- TOTAL USERS -->
+    <div class="card">
+        <i class="fa-solid fa-users"></i>
+        <div>
+            <h3>Total Users</h3>
+            <p>@Model.TotalUsers</p>
+        </div>
+    </div>
+
+    <!-- TOTAL KITCHENS -->
+    <div class="card">
+        <i class="fa-solid fa-store"></i>
+        <div>
+            <h3>Total Kitchens</h3>
+            <p>@Model.TotalKitchens</p>
+        </div>
+    </div>
+
+    <!-- TOTAL ORDERS -->
+    <div class="card">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <div>
+            <h3>Total Orders</h3>
+            <p>@Model.TotalOrders</p>
+        </div>
+    </div>
+
+    <!-- REVENUE -->
+    <div class="card">
+        <i class="fa-solid fa-money-bill-wave"></i>
+        <div>
+            <h3>Revenue</h3>
+            <p>Rs @Model.Revenue.ToString("N0")</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================
+     VISUAL ANALYTICS (CHARTS)
+============================================================ -->
+
+<div class="charts-grid">
+    <!-- 7-DAY REVENUE OVERVIEW -->
+    <div class="chart-card">
+        <h2>7-Day Revenue Overview</h2>
+        <div class="chart-container">
+            @if (Model.Last7DaysRevenue != null && Model.Last7DaysRevenue.Sum() > 0)
+            {
+                <canvas id="revenueChart"></canvas>
+            }
+            else
+            {
+                <div class="empty-chart">
+                    <i class="fa-solid fa-chart-line fa-2x"></i>
+                    <span>Not enough data in the last 7 days.</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- TOP 5 KITCHENS -->
+    <div class="chart-card">
+        <h2>Top 5 Kitchens by Volume</h2>
+        <div class="chart-container">
+            @if (Model.TopKitchenOrderCounts != null && Model.TopKitchenOrderCounts.Sum() > 0)
+            {
+                <canvas id="kitchensChart"></canvas>
+            }
+            else
+            {
+                <div class="empty-chart">
+                    <i class="fa-solid fa-chart-pie fa-2x"></i>
+                    <span>Not enough data to display top kitchens.</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
+<!-- ============================================================
+     RECENT ORDERS
+============================================================ -->
+
+<div class="recent-orders">
+
+    <h2>Recent Orders</h2>
+
+    @if (Model.RecentOrders != null && Model.RecentOrders.Any())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Kitchen</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model.RecentOrders)
+                {
+                    <tr>
+                        <td>#@order.OrderId</td>
+                        <td>@order.Customer</td>
+                        <td>@order.Kitchen</td>
+                        <td>
+                            @if (order.Status == "Order Placed")
+                            {
+                                <span class="status pending">@order.Status</span>
+                            }
+                            else if (order.Status == "Accepted" || order.Status == "Preparing" || order.Status == "Out for Delivery")
+                            {
+                                <span class="status preparing">@order.Status</span>
+                            }
+                            else if (order.Status == "Delivered")
+                            {
+                                <span class="status delivered">@order.Status</span>
+                            }
+                            else if (order.Status == "Cancelled")
+                            {
+                                <span class="status cancelled">@order.Status</span>
+                            }
+                            else
+                            {
+                                <span class="status">@order.Status</span>
+                            }
+                        </td>
+                        <td>Rs @order.Amount.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty-orders">
+            <i class="fa-solid fa-receipt"></i>
+            <h3>No Orders Yet</h3>
+            <p>There are currently no orders in the system.</p>
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            
+            // Serialize data from ViewModel
+            var rawRevenueLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Last7DaysLabels ?? new List<string>()));
+            var rawRevenueData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Last7DaysRevenue ?? new List<decimal>()));
+            
+            var rawKitchenLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TopKitchenNames ?? new List<string>()));
+            var rawKitchenData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TopKitchenOrderCounts ?? new List<int>()));
+
+            // Revenue Chart
+            var revenueCanvas = document.getElementById('revenueChart');
+            if (revenueCanvas) {
+                new Chart(revenueCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: rawRevenueLabels,
+                        datasets: [{
+                            label: 'Daily Revenue',
+                            data: rawRevenueData,
+                            borderColor: '#F59E0B',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.35,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#F59E0B',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Rs ' + parseFloat(context.parsed.y).toFixed(2);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                border: { display: false },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.04)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    callback: function(value) { return 'Rs ' + value; }
+                                }
+                            },
+                            x: {
+                                border: { display: false },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Top Kitchens Chart
+            var kitchensCanvas = document.getElementById('kitchensChart');
+            if (kitchensCanvas) {
+                new Chart(kitchensCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: rawKitchenLabels,
+                        datasets: [{
+                            data: rawKitchenData,
+                            backgroundColor: [
+                                '#F59E0B',
+                                '#D9531E',
+                                '#5D4037',
+                                '#10B981',
+                                '#6B7280'
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: { family: "'Segoe UI', Roboto, sans-serif" }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+        });
+    </script>
+}

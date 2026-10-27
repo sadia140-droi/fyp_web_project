@@ -1,0 +1,425 @@
+@{
+    ViewData["Title"] = "Admin Settings";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .settings-page {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .settings-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 12px 30px rgba(92, 64, 55, 0.08);
+    }
+
+        .settings-card h3 {
+            margin-bottom: 12px;
+            font-weight: 700;
+            color: #5D4037;
+        }
+
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+        .setting-item:last-child {
+            border-bottom: 0;
+        }
+
+        .setting-item span {
+            font-weight: 500;
+        }
+
+    .input-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+        .input-row input {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            flex: 1;
+        }
+
+    .btn {
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        margin-left: 6px;
+    }
+
+    .btn-add {
+        background: #FFB347;
+        color: #fff;
+    }
+
+    .btn-edit {
+        background: #28a745;
+        color: #fff;
+    }
+
+    .btn-delete {
+        background: #dc3545;
+        color: #fff;
+    }
+
+    .list-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        padding: 4px 0;
+    }
+
+    .toggle {
+        position: relative;
+        width: 50px;
+        height: 26px;
+        display: inline-block;
+    }
+
+        .toggle input {
+            display: none;
+        }
+
+    .slider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #ccc;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        .slider::before {
+            content: "";
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: 0.3s;
+        }
+
+    .toggle input:checked + .slider {
+        background: #FFB347;
+    }
+
+        .toggle input:checked + .slider::before {
+            transform: translateX(24px);
+        }
+</style>
+
+<div class="settings-page">
+
+    <h1 class="page-title">Settings</h1>
+
+    <!-- MESSAGES -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="message success-message" style="color:green; margin-bottom: 10px;">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="message error-message" style="color:red; margin-bottom: 10px;">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="settings-card">
+        <h3>Manage Categories</h3>
+
+        <div id="categoriesList"></div>
+
+        <div class="input-row">
+            <input type="text"
+                   id="newCategory"
+                   placeholder="New category name" />
+
+            <button class="btn btn-add"
+                    id="addCategory">
+                Add
+            </button>
+        </div>
+    </div>
+
+    <div class="settings-card">
+        <h3>Manage Offers</h3>
+
+        <div id="offersList"></div>
+
+        <div class="input-row">
+            <input type="text"
+                   id="offerTitle"
+                   placeholder="Offer title" />
+
+            <input type="number"
+                   id="offerDiscount"
+                   placeholder="Discount %" />
+
+            <button class="btn btn-add"
+                    id="addOffer">
+                Add
+            </button>
+        </div>
+    </div>
+
+    <div class="settings-card">
+        <h3>App Settings</h3>
+
+        <div class="setting-item">
+            <span>Enable Notifications</span>
+
+            <label class="toggle">
+                <input type="checkbox" checked />
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="setting-item">
+            <span>Enable Cash on Delivery</span>
+
+            <label class="toggle">
+                <input type="checkbox" />
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="setting-item">
+            <span>Show Popular Items on Homepage</span>
+
+            <label class="toggle">
+                <input type="checkbox" checked />
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+    // Note: This script uses hardcoded Javascript arrays.
+    // If you want to connect these directly to the backend database,
+    // this logic should be updated to submit standard HTML forms
+    // to CreateCategory, UpdateCategory, and DeleteCategory actions.
+
+    const categories = [
+        "Pizza",
+        "Biryani",
+        "Desserts"
+    ];
+
+    const offers = [
+        {
+            title: "Weekend Special",
+            discount: 15
+        },
+        {
+            title: "Holiday Sale",
+            discount: 20
+        }
+    ];
+
+    const categoriesList =
+        document.getElementById("categoriesList");
+
+    const offersList =
+        document.getElementById("offersList");
+
+
+    function renderCategories() {
+
+        categoriesList.innerHTML = "";
+
+        categories.forEach((category, index) => {
+
+            const div = document.createElement("div");
+
+            div.className = "list-row";
+
+            div.innerHTML = `
+                <span>${category}</span>
+
+                <div>
+                    <button class="btn btn-edit">
+                        Edit
+                    </button>
+
+                    <button class="btn btn-delete">
+                        Delete
+                    </button>
+                </div>
+            `;
+
+            categoriesList.appendChild(div);
+
+
+            div.querySelector(".btn-delete")
+                .addEventListener("click", function () {
+
+                    if (confirm("Delete category?")) {
+
+                        categories.splice(index, 1);
+
+                        renderCategories();
+                    }
+                });
+
+
+            div.querySelector(".btn-edit")
+                .addEventListener("click", function () {
+
+                    const value =
+                        prompt("Edit category", category);
+
+                    if (value) {
+
+                        categories[index] = value;
+
+                        renderCategories();
+                    }
+                });
+
+        });
+    }
+
+
+    function renderOffers() {
+
+        offersList.innerHTML = "";
+
+        offers.forEach((offer, index) => {
+
+            const div = document.createElement("div");
+
+            div.className = "list-row";
+
+            div.innerHTML = `
+                <span>
+                    ${offer.title} - ${offer.discount}%
+                </span>
+
+                <div>
+                    <button class="btn btn-edit">
+                        Edit
+                    </button>
+
+                    <button class="btn btn-delete">
+                        Delete
+                    </button>
+                </div>
+            `;
+
+            offersList.appendChild(div);
+
+
+            div.querySelector(".btn-delete")
+                .addEventListener("click", function () {
+
+                    if (confirm("Delete offer?")) {
+
+                        offers.splice(index, 1);
+
+                        renderOffers();
+                    }
+                });
+
+
+            div.querySelector(".btn-edit")
+                .addEventListener("click", function () {
+
+                    const newTitle =
+                        prompt("Offer title", offer.title);
+
+                    const newDiscount =
+                        prompt("Discount %", offer.discount);
+
+                    if (newTitle && newDiscount) {
+
+                        offers[index] = {
+                            title: newTitle,
+                            discount: Number(newDiscount)
+                        };
+
+                        renderOffers();
+                    }
+                });
+
+        });
+    }
+
+
+    document.getElementById("addCategory")
+        .addEventListener("click", function () {
+
+            const input =
+                document.getElementById("newCategory");
+
+            const value =
+                input.value.trim();
+
+            if (value) {
+
+                categories.push(value);
+
+                input.value = "";
+
+                renderCategories();
+            }
+        });
+
+
+    document.getElementById("addOffer")
+        .addEventListener("click", function () {
+
+            const title =
+                document.getElementById("offerTitle")
+                    .value.trim();
+
+            const discount =
+                document.getElementById("offerDiscount")
+                    .value.trim();
+
+            if (title && discount) {
+
+                offers.push({
+                    title: title,
+                    discount: Number(discount)
+                });
+
+                document.getElementById("offerTitle").value = "";
+
+                document.getElementById("offerDiscount").value = "";
+
+                renderOffers();
+            }
+        });
+
+
+    renderCategories();
+
+    renderOffers();
+
+</script>

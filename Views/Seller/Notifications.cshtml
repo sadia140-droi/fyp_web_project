@@ -1,0 +1,586 @@
+@model Cloud_Kitchen_web_App.Models.NotificationViewModel
+
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = "~/Views/Shared/_SellerLayout.cshtml";
+
+    var notifications = Model?.Notifications
+        ?? new List<Cloud_Kitchen_web_App.Models.Notification>();
+
+    var unreadCount = notifications.Count(n =>
+        !string.Equals(
+            n.Status,
+            "Read",
+            StringComparison.OrdinalIgnoreCase));
+}
+
+<main class="main-content">
+
+    <div class="profile-box">
+        <div class="profile-avatar-letter" title="Notifications"><i class="fa-solid fa-bell"></i></div>
+
+        <div class="meta">
+
+            <div class="name">
+                Seller Notifications
+            </div>
+
+            <div class="role">
+                Kitchen Notifications
+            </div>
+
+        </div>
+
+        <div style="margin-left:auto">
+
+            <span class="badge"
+                  id="unreadCount">
+                @unreadCount
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <div class="top-actions">
+
+            <button type="button"
+                    id="btnAll"
+                    class="btn">
+                All
+            </button>
+
+            <button type="button"
+                    id="btnUnread"
+                    class="btn btn-mark">
+                Unread
+            </button>
+
+            <input type="text"
+                   id="searchNote"
+                   class="input"
+                   placeholder="Search notifications..."
+                   style="min-width:220px;margin-left:auto">
+
+
+            @if (unreadCount > 0)
+            {
+                <form asp-controller="Seller"
+                      asp-action="MarkAllSellerNotificationsAsRead"
+                      method="post"
+                      id="markAllForm"
+                      style="margin:0;">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn btn-del"
+                            id="btnMarkAll">
+                        Mark All Read
+                    </button>
+
+                </form>
+            }
+
+        </div>
+
+
+        <div class="list"
+             id="notesList">
+
+            @if (notifications.Any())
+            {
+                foreach (var notification in notifications)
+                {
+                    var isUnread =
+                    !string.Equals(
+                    notification.Status,
+                    "Read",
+                    StringComparison.OrdinalIgnoreCase);
+
+                    var encodedId =
+                    Uri.EscapeDataString(
+                    notification.Id ?? string.Empty);
+
+                    <div class="notification-item @(isUnread ? "unread" : "")"
+                         data-status="@(isUnread ? "Unread" : "Read")"
+                         data-search="@($"{notification.Title} {notification.Body}")"
+                         data-id="@notification.Id">
+
+
+                        <div class="notification-content">
+
+                            <div class="notification-title">
+                                @notification.Title
+                            </div>
+
+
+                            <div class="notification-body">
+                                @notification.Body
+                            </div>
+
+
+                            <div class="notification-time">
+                                @notification.Time
+                                .ToLocalTime()
+                                .ToString(
+                                "dd MMM yyyy, hh:mm tt")
+                            </div>
+
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                                notification.Link))
+                            {
+                                <a href="@notification.Link"
+                                   class="notification-link"
+                                   data-notification-id="@encodedId">
+                                    Open
+                                </a>
+                            }
+
+                        </div>
+
+
+                        <div class="notification-actions">
+
+                            @if (isUnread)
+                            {
+                                <span class="notification-status">
+                                    Unread
+                                </span>
+
+                                <button type="button"
+                                        class="btn btn-mark btn-read"
+                                        data-id="@encodedId">
+                                    Mark Read
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="notification-status">
+                                    Read
+                                </span>
+                            }
+
+                        </div>
+
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-notifications">
+                    No notifications found.
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</main>
+
+
+<form id="antiForgeryForm"
+      style="display:none;">
+
+    @Html.AntiForgeryToken()
+
+</form>
+
+
+<script>
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const notes =
+                Array.from(
+                    document.querySelectorAll(
+                        ".notification-item"
+                    )
+                );
+
+
+            const btnAll =
+                document.getElementById(
+                    "btnAll"
+                );
+
+
+            const btnUnread =
+                document.getElementById(
+                    "btnUnread"
+                );
+
+
+            const searchInput =
+                document.getElementById(
+                    "searchNote"
+                );
+
+
+            const markAllForm =
+                document.getElementById(
+                    "markAllForm"
+                );
+
+
+            function getToken() {
+
+                const tokenElement =
+                    document.querySelector(
+                        'input[name="__RequestVerificationToken"]'
+                    );
+
+                return tokenElement
+                    ? tokenElement.value
+                    : "";
+            }
+
+
+            function updateUnreadCount() {
+
+                const unread =
+                    document.querySelectorAll(
+                        '.notification-item[data-status="Unread"]'
+                    ).length;
+
+
+                const badge =
+                    document.getElementById(
+                        "unreadCount"
+                    );
+
+
+                if (badge) {
+
+                    badge.textContent =
+                        unread;
+                }
+
+
+                const markAllButton =
+                    document.getElementById(
+                        "btnMarkAll"
+                    );
+
+
+                if (markAllButton) {
+
+                    markAllButton.disabled =
+                        unread === 0;
+                }
+            }
+
+
+            function filterNotifications(
+                mode
+            ) {
+
+                const search =
+                    (
+                        searchInput?.value
+                        || ""
+                    )
+                    .trim()
+                    .toLowerCase();
+
+
+                notes.forEach(
+                    function (note) {
+
+                        const status =
+                            note.dataset.status
+                            || "";
+
+
+                        const text =
+                            note.dataset.search
+                            || "";
+
+
+                        const matchesStatus =
+                            mode === "all"
+                            ||
+                            (
+                                mode === "unread"
+                                &&
+                                status === "Unread"
+                            );
+
+
+                        const matchesSearch =
+                            text
+                                .toLowerCase()
+                                .includes(search);
+
+
+                        note.style.display =
+                            matchesStatus &&
+                            matchesSearch
+                                ? ""
+                                : "none";
+                    }
+                );
+            }
+
+
+            async function markNotificationAsRead(
+                notificationId,
+                noteElement
+            ) {
+
+                if (!notificationId) {
+
+                    return;
+                }
+
+
+                try {
+
+                    const formData =
+                        new URLSearchParams();
+
+
+                    formData.append(
+                        "id",
+                        decodeURIComponent(
+                            notificationId
+                        )
+                    );
+
+
+                    formData.append(
+                        "__RequestVerificationToken",
+                        getToken()
+                    );
+
+
+                    const response =
+                        await fetch(
+                            "/Seller/MarkSellerNotificationAsRead",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/x-www-form-urlencoded; charset=UTF-8"
+                                },
+
+                                body:
+                                    formData.toString(),
+
+                                credentials:
+                                    "same-origin"
+                            }
+                        );
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            "Unable to mark notification as read."
+                        );
+                    }
+
+
+                    if (noteElement) {
+
+                        noteElement.classList.remove(
+                            "unread"
+                        );
+
+
+                        noteElement.dataset.status =
+                            "Read";
+
+
+                        const statusElement =
+                            noteElement.querySelector(
+                                ".notification-status"
+                            );
+
+
+                        if (statusElement) {
+
+                            statusElement.textContent =
+                                "Read";
+                        }
+
+
+                        const readButton =
+                            noteElement.querySelector(
+                                ".btn-read"
+                            );
+
+
+                        if (readButton) {
+
+                            readButton.remove();
+                        }
+                    }
+
+
+                    updateUnreadCount();
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Seller notification error:",
+                        error
+                    );
+
+
+                    alert(
+                        "Unable to update the notification. Please try again."
+                    );
+                }
+            }
+
+
+            document
+                .querySelectorAll(".btn-read")
+                .forEach(
+                    function (button) {
+
+                        button.addEventListener(
+                            "click",
+                            function () {
+
+                                const noteElement =
+                                    button.closest(
+                                        ".notification-item"
+                                    );
+
+
+                                markNotificationAsRead(
+                                    button.dataset.id,
+                                    noteElement
+                                );
+                            }
+                        );
+                    }
+                );
+
+
+            document
+                .querySelectorAll(".notification-link")
+                .forEach(
+                    function (link) {
+
+                        link.addEventListener(
+                            "click",
+                            async function (event) {
+
+                                const noteElement =
+                                    link.closest(
+                                        ".notification-item"
+                                    );
+
+
+                                const status =
+                                    noteElement?.dataset.status
+                                    || "";
+
+
+                                if (
+                                    status !== "Unread"
+                                ) {
+
+                                    return;
+                                }
+
+
+                                event.preventDefault();
+
+
+                                const targetUrl =
+                                    link.getAttribute(
+                                        "href"
+                                    );
+
+
+                                await markNotificationAsRead(
+                                    link.dataset.notificationId,
+                                    noteElement
+                                );
+
+
+                                if (targetUrl) {
+
+                                    window.location.href =
+                                        targetUrl;
+                                }
+                            }
+                        );
+                    }
+                );
+
+
+            btnAll?.addEventListener(
+                "click",
+                function () {
+
+                    filterNotifications(
+                        "all"
+                    );
+                }
+            );
+
+
+            btnUnread?.addEventListener(
+                "click",
+                function () {
+
+                    filterNotifications(
+                        "unread"
+                    );
+                }
+            );
+
+
+            searchInput?.addEventListener(
+                "input",
+                function () {
+
+                    filterNotifications(
+                        "all"
+                    );
+                }
+            );
+
+
+            markAllForm?.addEventListener(
+                "submit",
+                function () {
+
+                    const button =
+                        document.getElementById(
+                            "btnMarkAll"
+                        );
+
+
+                    if (button) {
+
+                        button.disabled =
+                            true;
+
+                        button.textContent =
+                            "Updating...";
+                    }
+                }
+            );
+
+
+            updateUnreadCount();
+
+        }
+    );
+
+</script>

@@ -1,0 +1,231 @@
+@model List<CloudKitchen.Models.FavoriteKitchenViewModel>
+@{
+    ViewData["Title"] = "Favorite Kitchens";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+<div class="favorite-kitchens-page">
+    <div class="page-header">
+        <h2>
+            <i class="fas fa-heart" style="color: #D9534F;"></i>
+            Favorite Kitchens
+        </h2>
+        <p>Your saved kitchens in one place.</p>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="favorites-grid">
+            @foreach (var kitchen in Model)
+            {
+                <div class="fav-card" onclick="window.location.href='/Customer/KitchenMenu?kitchen=@Uri.EscapeDataString(kitchen.Name)'">
+                    <div class="fav-image-wrapper">
+                        @{
+                            var imageUrl = string.IsNullOrWhiteSpace(kitchen.ImageUrl) ? "/images/14.JPG" : kitchen.ImageUrl;
+                            var finalImageUrl = Url.Content("~/" + imageUrl.TrimStart('/'));
+                        }
+                        <img src="@finalImageUrl" alt="@kitchen.Name">
+                        <div class="fav-badge">@kitchen.Tag</div>
+                        <!-- Provide an option to unfavorite (toggle) here if needed, or just keep it as a static red heart for the Favorites view -->
+                        <div class="fav-heart"><i class="fas fa-heart" style="color: #D9534F;"></i></div>
+                    </div>
+                    <div class="fav-info">
+                        <div class="fav-name">@kitchen.Name</div>
+                        <div class="fav-meta">
+                            <span><i class="fas fa-map-marker-alt" style="color: #F6A035; margin-right:4px;"></i>@kitchen.Area</span>
+                            <span class="fav-rating"><i class="fas fa-star" style="color: #FFA41C;"></i> @kitchen.Rating</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Empty State matching screenshot -->
+        <div class="empty-state-card">
+            <div class="empty-state-icon">
+                <i class="far fa-heart" style="color: #D9534F;"></i>
+            </div>
+            <h3>No Favorite Kitchens Yet</h3>
+            <p>Kitchens you save as favorites will appear here.</p>
+            <a asp-controller="Customer" asp-action="Index" class="btn-browse">
+                <i class="fas fa-store me-2"></i>Browse Kitchens
+            </a>
+        </div>
+    }
+</div>
+
+<style>
+    .favorite-kitchens-page {
+        min-height: calc(100vh - 70px);
+        background: #F5E6CA;
+        padding: 40px 20px;
+        font-family: 'Inter', 'Poppins', sans-serif;
+    }
+
+    .page-header {
+        max-width: 900px;
+        margin: 0 auto 30px;
+    }
+
+    .page-header h2 {
+        color: #5D4037;
+        font-size: 32px;
+        margin-bottom: 8px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-header p {
+        color: #795548;
+        margin: 0;
+        font-size: 16px;
+    }
+
+    /* Empty State Styling */
+    .empty-state-card {
+        background: #ffffff;
+        max-width: 600px;
+        margin: 40px auto;
+        border-radius: 12px;
+        padding: 50px 30px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(93, 64, 55, 0.05);
+    }
+
+    .empty-state-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: #FFF4E5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin: 0 auto 20px;
+    }
+
+    .empty-state-card h3 {
+        color: #5D4037;
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .empty-state-card p {
+        color: #8D6E63;
+        font-size: 15px;
+        margin-bottom: 25px;
+    }
+
+    .btn-browse {
+        background: #F6A035;
+        color: #5D4037;
+        font-weight: 600;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        transition: 0.2s;
+    }
+
+    .btn-browse:hover {
+        background: #e58f27;
+        color: #fff;
+    }
+
+    /* Grid Styling (for populated state) */
+    .favorites-grid {
+        max-width: 900px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+    }
+
+    .fav-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(93, 64, 55, 0.06);
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .fav-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(93, 64, 55, 0.12);
+    }
+
+    .fav-image-wrapper {
+        position: relative;
+        width: 100%;
+        height: 160px;
+        background-color: #EEE;
+    }
+
+    .fav-image-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .fav-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: #F6A035;
+        color: #fff;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 6px;
+    }
+
+    .fav-heart {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .fav-info {
+        padding: 16px;
+    }
+
+    .fav-name {
+        font-weight: 700;
+        font-size: 17px;
+        color: #5D4037;
+        margin-bottom: 6px;
+    }
+
+    .fav-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        color: #795548;
+    }
+    
+    .fav-rating {
+        font-weight: 600;
+    }
+
+    @@media (max-width: 768px) {
+        .page-header h2 {
+            font-size: 28px;
+        }
+    }
+</style>

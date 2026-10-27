@@ -1,0 +1,496 @@
+@{
+    ViewData["Title"] = "Seller Sign Up";
+    Layout = "~/Views/Shared/_SellCustLayout.cshtml";
+}
+
+    <div class="signup-card">
+
+        <h2>Seller Sign Up</h2>
+
+        <p>Create an account to register your kitchen</p>
+
+
+        <!-- =====================================================
+             SELLER SIGNUP FORM
+             ===================================================== -->
+
+        <form asp-action="SellerSignup"
+              asp-controller="Account"
+              method="post"
+              id="signupForm"
+              autocomplete="on">
+
+            @Html.AntiForgeryToken()
+
+
+            <!-- =================================================
+                 SERVER VALIDATION ERRORS
+                 ================================================= -->
+
+            <div asp-validation-summary="All"
+                 class="text-danger">
+            </div>
+
+
+            <!-- =================================================
+                 FULL NAME
+                 ================================================= -->
+
+            <label for="FullName">
+                Full Name
+            </label>
+
+            <input type="text"
+                   id="FullName"
+                   name="FullName"
+                   placeholder="Your full name"
+                   autocomplete="name"
+                   maxlength="100"
+                   required />
+
+
+            <!-- =================================================
+                 EMAIL
+                 ================================================= -->
+
+            <label for="Email">
+                Google Email Address
+            </label>
+
+            <input type="email"
+                   id="Email"
+                   name="Email"
+                   placeholder="you@gmail.com"
+                   autocomplete="email"
+                   maxlength="256"
+                   required />
+
+            <span class="password-error" id="emailError" style="display: none;"></span>
+
+
+            <!-- =================================================
+                 PHONE
+                 ================================================= -->
+
+            <label for="PhoneNumber">
+                Phone Number
+            </label>
+
+            <input type="tel"
+                   id="PhoneNumber"
+                   name="PhoneNumber"
+                   placeholder="03001234567"
+                   autocomplete="tel"
+                   maxlength="20"
+                   required />
+
+            <span class="password-error" id="phoneError" style="display: none;"></span>
+
+
+            <!-- =================================================
+                 PASSWORD
+                 ================================================= -->
+
+            <label for="Password">
+                Create Password
+            </label>
+
+            <div class="password-wrapper">
+
+                <input type="password"
+                       id="Password"
+                       name="Password"
+                       placeholder="Enter password"
+                       autocomplete="new-password"
+                       required />
+
+                <button type="button"
+                        class="password-toggle"
+                        onclick="togglePassword('Password', this)"
+                        aria-label="Show password"
+                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); z-index: 10; background: transparent; border: none;">
+
+                    <svg class="eye-icon"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+
+                    </svg>
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 CONFIRM PASSWORD
+                 ================================================= -->
+
+            <label for="ConfirmPassword">
+                Confirm Password
+            </label>
+
+            <div class="password-wrapper">
+
+                <input type="password"
+                       id="ConfirmPassword"
+                       name="ConfirmPassword"
+                       placeholder="Re-enter password"
+                       autocomplete="new-password"
+                       required />
+
+                <button type="button"
+                        class="password-toggle"
+                        onclick="togglePassword('ConfirmPassword', this)"
+                        aria-label="Show password"
+                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); z-index: 10; background: transparent; border: none;">
+
+                    <svg class="eye-icon"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+
+                    </svg>
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 PASSWORD MATCH ERROR
+                 ================================================= -->
+
+            <span id="passwordMatchError"
+                  class="password-error">
+            </span>
+
+
+            <!-- =================================================
+                 INFORMATION
+                 ================================================= -->
+
+            <p class="note">
+                After sign up you'll be asked to complete your
+                Kitchen Profile. Your seller account will remain
+                pending until an administrator approves your kitchen.
+            </p>
+
+
+            <!-- =================================================
+                 SIGNUP
+                 ================================================= -->
+
+            <button type="submit">
+                Sign Up
+            </button>
+
+        </form>
+
+
+        <!-- =====================================================
+             LOGIN LINK
+             ===================================================== -->
+
+        <div class="login-link">
+
+            Already a seller?
+
+            <a asp-action="Login"
+               asp-controller="Account">
+                Login
+            </a>
+
+        </div>
+
+    </div>
+
+
+<!-- =============================================================
+     PASSWORD SHOW / HIDE
+     ============================================================= -->
+
+<script>
+
+    function togglePassword(inputId, button) {
+
+        const input = document.getElementById(inputId);
+
+        if (!input) {
+            return;
+        }
+
+        if (input.type === "password") {
+
+            input.type = "text";
+
+            button.setAttribute(
+                "aria-label",
+                "Hide password"
+            );
+
+        } else {
+
+            input.type = "password";
+
+            button.setAttribute(
+                "aria-label",
+                "Show password"
+            );
+        }
+    }
+
+
+    // ============================================================
+    // PASSWORD MATCH VALIDATION
+    // ============================================================
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const form =
+            document.getElementById("signupForm");
+
+        const password =
+            document.getElementById("Password");
+
+        const confirmPassword =
+            document.getElementById("ConfirmPassword");
+
+        const error =
+            document.getElementById("passwordMatchError");
+
+
+        function validatePasswords() {
+
+            if (!password.value ||
+                !confirmPassword.value) {
+
+                error.textContent = "";
+
+                confirmPassword.setCustomValidity("");
+
+                return;
+            }
+
+
+            if (password.value !==
+                confirmPassword.value) {
+
+                error.textContent =
+                    "Passwords do not match.";
+
+                confirmPassword.setCustomValidity(
+                    "Passwords do not match."
+                );
+
+            } else {
+
+                error.textContent = "";
+
+                confirmPassword.setCustomValidity("");
+            }
+        }
+
+
+        password.addEventListener(
+            "input",
+            validatePasswords
+        );
+
+        confirmPassword.addEventListener(
+            "input",
+            validatePasswords
+        );
+
+        // ============================================================
+        // STRICT GOOGLE EMAIL VALIDATION
+        // ============================================================
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@@(gmail\.com|googlemail\.com)$/i;
+        const emailInput = document.getElementById("Email");
+        const emailError = document.getElementById("emailError");
+        let emailTouched = false;
+
+        function validateEmail() {
+            if (!emailInput || !emailError) return true;
+            const raw = emailInput.value;
+            const trimmed = raw.trim();
+            if (raw !== trimmed) {
+                emailInput.value = trimmed;
+            }
+
+            if (!trimmed) {
+                emailError.textContent = "Google Email address is required.";
+                emailError.style.display = "block";
+                emailInput.setCustomValidity("Google Email address is required.");
+                return false;
+            }
+
+            if (!emailRegex.test(trimmed)) {
+                emailError.textContent = "Only valid Google accounts (@@gmail.com) are allowed (e.g., name@@gmail.com).";
+                emailError.style.display = "block";
+                emailInput.setCustomValidity("Only valid Google accounts (@@gmail.com) are allowed.");
+                return false;
+            }
+
+            emailError.textContent = "";
+            emailError.style.display = "none";
+            emailInput.setCustomValidity("");
+            return true;
+        }
+
+        if (emailInput) {
+            emailInput.addEventListener("input", function () {
+                if (emailTouched) {
+                    validateEmail();
+                }
+            });
+            emailInput.addEventListener("blur", function () {
+                emailTouched = true;
+                validateEmail();
+            });
+        }
+
+        // ============================================================
+        // PAKISTANI MOBILE NUMBER VALIDATION
+        // ============================================================
+        const phoneRegex = /^(\+92|92|0)?3[0-5][0-9]{8}$/;
+        const phoneInput = document.getElementById("PhoneNumber");
+        const phoneError = document.getElementById("phoneError");
+        let phoneTouched = false;
+
+        function validatePhone() {
+            if (!phoneInput || !phoneError) return true;
+            const raw = phoneInput.value;
+            const clean = raw.replace(/[\s\-\(\)]/g, "");
+
+            if (!clean) {
+                phoneError.textContent = "Phone number is required.";
+                phoneError.style.display = "block";
+                phoneInput.setCustomValidity("Phone number is required.");
+                return false;
+            }
+
+            if (!phoneRegex.test(clean)) {
+                phoneError.textContent = "Please enter a valid Pakistani mobile number (e.g., 03001234567 or +923001234567).";
+                phoneError.style.display = "block";
+                phoneInput.setCustomValidity("Please enter a valid Pakistani mobile number.");
+                return false;
+            }
+
+            phoneError.textContent = "";
+            phoneError.style.display = "none";
+            phoneInput.setCustomValidity("");
+            return true;
+        }
+
+        if (phoneInput) {
+            phoneInput.addEventListener("input", function () {
+                if (phoneTouched) {
+                    validatePhone();
+                }
+            });
+            phoneInput.addEventListener("blur", function () {
+                phoneTouched = true;
+                validatePhone();
+            });
+        }
+
+        form.addEventListener(
+            "submit",
+            function (event) {
+                emailTouched = true;
+                phoneTouched = true;
+                const isEmailValid = validateEmail();
+                const isPhoneValid = validatePhone();
+                validatePasswords();
+
+                if (!isEmailValid) {
+                    event.preventDefault();
+                    emailInput.focus();
+                    return;
+                }
+
+                if (!isPhoneValid) {
+                    event.preventDefault();
+                    phoneInput.focus();
+                    return;
+                }
+
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    form.reportValidity();
+                }
+            }
+        );
+
+    });
+
+</script>
+
+
+<!-- =============================================================
+     PAGE-SPECIFIC STYLING
+     ============================================================= -->
+
+<style>
+
+    .password-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+        .password-wrapper input {
+            width: 100%;
+            padding-right: 48px;
+        }
+
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        margin: 0;
+        background: transparent !important;
+        border: none;
+        color: #777;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+        .password-toggle:hover {
+            background: transparent !important;
+            color: var(--dark-brown);
+        }
+
+    .eye-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .password-error {
+        display: block;
+        color: #dc3545;
+        font-size: 0.85rem;
+        text-align: left;
+        margin-top: -8px;
+        margin-bottom: 10px;
+    }
+
+</style>

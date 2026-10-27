@@ -1,0 +1,258 @@
+@model Cloud_Kitchen_web_App.Models.OrdersViewModel
+
+@{
+    ViewBag.Title = "Orders";
+    Layout = "~/Views/Shared/_SellerLayout.cshtml";
+}
+
+@{
+    var orders = Model.Orders ?? new List<Cloud_Kitchen_web_App.Models.Order>();
+    var totalOrders = orders.Count;
+    var newOrders = orders.Count(o => string.Equals(o.Status, "Order Placed", StringComparison.OrdinalIgnoreCase) || string.Equals(o.Status, "New", StringComparison.OrdinalIgnoreCase));
+    var pendingOrders = orders.Count(o =>
+        string.Equals(o.Status, "Order Accepted", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(o.Status, "Accepted", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(o.Status, "Kitchen Preparing", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(o.Status, "Preparing", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(o.Status, "Ready", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(o.Status, "Out for Delivery", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(o.Status, "Dispatched", StringComparison.OrdinalIgnoreCase));
+
+    string StatusClass(string status)
+    {
+        if (string.Equals(status, "Order Placed", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "New", StringComparison.OrdinalIgnoreCase)) return "s-new";
+        if (string.Equals(status, "Order Accepted", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Accepted", StringComparison.OrdinalIgnoreCase)) return "s-accepted";
+        if (string.Equals(status, "Kitchen Preparing", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Preparing", StringComparison.OrdinalIgnoreCase)) return "s-prep";
+        if (string.Equals(status, "Ready", StringComparison.OrdinalIgnoreCase)) return "s-ready";
+        if (string.Equals(status, "Out for Delivery", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Dispatched", StringComparison.OrdinalIgnoreCase)) return "s-out";
+        if (string.Equals(status, "Delivered", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Order Delivered", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase)) return "s-delivered";
+        if (string.Equals(status, "Cancelled", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Canceled", StringComparison.OrdinalIgnoreCase)) return "s-cancel";
+        return "s-new";
+    }
+
+    bool IsFinalStatus(string status)
+    {
+        return string.Equals(status, "Delivered", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(status, "Order Delivered", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(status, "Cancelled", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(status, "Canceled", StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+<main class="main-content">
+    <div class="profile-box" role="region" aria-label="Seller profile">
+        @{
+            var sName = string.IsNullOrWhiteSpace(Model.SellerName) ? "Seller" : Model.SellerName.Trim();
+            var sParts = sName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var sInitials = sParts.Length > 1 
+                ? $"{sParts[0][0]}{sParts[sParts.Length - 1][0]}".ToUpper() 
+                : sParts[0].Substring(0, 1).ToUpper();
+        }
+        <div class="profile-avatar-letter" title="@sName">@sInitials</div>
+        <div class="meta">
+            <div class="name">@Model.SellerName</div>
+            <div class="role">Seller • @Model.KitchenName</div>
+        </div>
+        <div style="margin-left:auto">
+            <span style="display:inline-block;padding:6px 12px;border-radius:999px;background:linear-gradient(90deg,var(--soft-orange),#ffbf72);color:var(--dark-brown);font-weight:700;">
+                @Model.StoreStatus
+            </span>
+        </div>
+    </div>
+
+    <!-- Anti-forgery token for AJAX -->
+    <form id="orderAntiForgeryForm" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <!-- Orders & Status Updates Section -->
+    <section class="orders-card">
+        <h2 style="margin-bottom:16px;color:var(--dark-brown);font-size:1.6rem;font-weight:800;">Orders &amp; Status Updates</h2>
+
+        <!-- Controls / Search Filter Bar -->
+        <div class="search-filter-bar">
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input id="searchInput" class="input" placeholder="Search order, customer or item..." autocomplete="off">
+            </div>
+
+            <select id="statusFilter" class="select">
+                <option value="All">All statuses</option>
+                <option value="Order Placed">New / Placed</option>
+                <option value="Order Accepted">Accepted</option>
+                <option value="Kitchen Preparing">Preparing</option>
+                <option value="Ready">Ready</option>
+                <option value="Out for Delivery">Out for Delivery</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+
+            <label class="hide-completed-wrap">
+                <input type="checkbox" id="hideCompletedFilter">
+                <span>Hide completed steps</span>
+            </label>
+
+            <div style="margin-left:auto" class="small-meta" id="lastSync">
+                Last sync: @DateTime.Now.ToLocalTime().ToString("h:mm:ss tt")
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stat-row">
+            <div class="stat">
+                <strong id="totalCount">@totalOrders</strong>
+                <span>Total orders</span>
+            </div>
+            <div class="stat">
+                <strong id="newCount">@newOrders</strong>
+                <span>New</span>
+            </div>
+            <div class="stat">
+                <strong id="pendingCount">@pendingOrders</strong>
+                <span>Preparing / Ready / Out</span>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="table-wrap">
+            <table aria-describedby="orders-table">
+                <thead>
+                    <tr>
+                        <th>ORDER ID</th>
+                        <th>CUSTOMER</th>
+                        <th>ORDER ITEMS</th>
+                        <th>TOTAL (RS.)</th>
+                        <th>PLACED</th>
+                        <th>CURRENT STATUS</th>
+                        <th>CHANGE STATUS</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersBody">
+                    @if (orders.Any())
+                    {
+                        foreach (var order in orders)
+                        {
+                            var customerDisplayName = !string.IsNullOrWhiteSpace(order.CustomerAccount?.Name)
+                                ? order.CustomerAccount.Name
+                                : (!string.IsNullOrWhiteSpace(order.Customer) && !order.Customer.Contains("@") ? order.Customer : (order.CustomerAccount?.Name ?? order.Customer));
+                            var itemCount = order.Items?.Sum(i => i.Qty) ?? 0;
+                            var itemsSummary = order.Items != null && order.Items.Any()
+                                ? string.Join(", ", order.Items.Select(i => $"{i.Qty}x {i.Name}"))
+                                : "No items";
+                            var itemNames = order.Items == null ? string.Empty : string.Join(",", order.Items.Select(i => i.Name ?? string.Empty));
+                            var isFinal = IsFinalStatus(order.Status);
+
+                            <tr data-order-id="@order.Id"
+                                data-customer="@customerDisplayName"
+                                data-phone="@order.Phone"
+                                data-address="@order.Address"
+                                data-total="@order.Total"
+                                data-subtotal="@order.Subtotal"
+                                data-delivery-fee="@order.DeliveryFee"
+                                data-payment-method="@order.PaymentMethod"
+                                data-placed-at="@order.PlacedAt.ToString("o")"
+                                data-status="@order.Status"
+                                data-item-names="@itemNames">
+                                <td><strong>#@order.Id</strong></td>
+                                <td>
+                                    <strong>@customerDisplayName</strong>
+                                    @if (!string.IsNullOrWhiteSpace(order.Phone))
+                                    {
+                                        <div style="color:var(--muted);font-size:0.88rem;margin-top:2px;">
+                                            <i class="fas fa-phone-alt" style="font-size:0.75rem;margin-right:4px;"></i>@order.Phone
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <div style="max-width:240px;line-height:1.35;font-size:0.92rem;color:var(--dark-brown);">
+                                        @itemsSummary
+                                    </div>
+                                    @if (order.Items != null && order.Items.Any())
+                                    {
+                                        foreach (var item in order.Items)
+                                        {
+                                            <span data-order-item data-name="@item.Name" data-quantity="@item.Qty" data-price="@item.Price" style="display:none;"></span>
+                                        }
+                                    }
+                                </td>
+                                <td>
+                                    <strong>Rs. @order.Total.ToString("N0")</strong>
+                                    <div style="color:var(--muted);font-size:0.8rem;font-weight:700;margin-top:2px;">
+                                        @(string.IsNullOrWhiteSpace(order.PaymentMethod) ? "COD" : order.PaymentMethod.ToUpper())
+                                    </div>
+                                </td>
+                                <td style="color:var(--dark-brown);font-size:0.88rem;">
+                                    <div>@order.PlacedAt.ToLocalTime().ToString("dd MMM yyyy")</div>
+                                    <div style="color:var(--muted);font-size:0.82rem;margin-top:2px;">@order.PlacedAt.ToLocalTime().ToString("hh:mm tt")</div>
+                                </td>
+                                <td data-order-status>
+                                    <span class="status-badge @StatusClass(order.Status)">@order.Status</span>
+                                </td>
+                                <td>
+                                    <div class="status-select-wrap">
+                                        <select class="status-dropdown" data-order-id="@order.Id" @(isFinal ? "disabled" : "") title="Select status to notify customer">
+                                            @if (string.Equals(order.Status, "Order Placed", StringComparison.OrdinalIgnoreCase) || string.Equals(order.Status, "New", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <option value="Order Placed" selected disabled>New / Placed</option>
+                                            }
+                                            <option value="Order Accepted" selected="@(string.Equals(order.Status, "Order Accepted", StringComparison.OrdinalIgnoreCase) || string.Equals(order.Status, "Accepted", StringComparison.OrdinalIgnoreCase))">Accepted</option>
+                                            <option value="Kitchen Preparing" selected="@(string.Equals(order.Status, "Kitchen Preparing", StringComparison.OrdinalIgnoreCase) || string.Equals(order.Status, "Preparing", StringComparison.OrdinalIgnoreCase))">Preparing</option>
+                                            <option value="Ready" selected="@(string.Equals(order.Status, "Ready", StringComparison.OrdinalIgnoreCase))">Ready</option>
+                                            <option value="Out for Delivery" selected="@(string.Equals(order.Status, "Out for Delivery", StringComparison.OrdinalIgnoreCase) || string.Equals(order.Status, "Dispatched", StringComparison.OrdinalIgnoreCase))">Dispatch Order</option>
+                                            <option value="Delivered" selected="@(string.Equals(order.Status, "Delivered", StringComparison.OrdinalIgnoreCase) || string.Equals(order.Status, "Order Delivered", StringComparison.OrdinalIgnoreCase) || string.Equals(order.Status, "Completed", StringComparison.OrdinalIgnoreCase))">Delivered</option>
+                                            <option value="Cancelled" selected="@(string.Equals(order.Status, "Cancelled", StringComparison.OrdinalIgnoreCase) || string.Equals(order.Status, "Canceled", StringComparison.OrdinalIgnoreCase))">Cancel Order</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button type="button" class="action-btn btn-view" data-id="@order.Id">View</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr id="emptyOrdersRow">
+                            <td colspan="8" style="text-align:center;padding:36px;color:#777;">No orders found for your kitchen.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<!-- Order Details Modal (Screenshot 2 in Cloud Kitchen App Theme) -->
+<div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" style="display:none;">
+    <div class="modal-card" role="document">
+        <div class="modal-header">
+            <div class="modal-header-info">
+                <h3 id="modalTitle">Order #--</h3>
+                <div id="modalStatusBadge"></div>
+            </div>
+            <button type="button" id="closeModal" class="modal-close-icon" aria-label="Close">✕</button>
+        </div>
+
+        <div id="modalBody"></div>
+
+        <div class="modal-footer-actions">
+            <button type="button" id="modalCancel" class="btn-modal-cancel">Cancel Order</button>
+            <button type="button" id="modalCloseBottom" class="btn-modal-close">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Feedback for Real-time Status and Customer Notification -->
+<div id="statusToast" class="status-toast" role="status" aria-live="polite">
+    <i class="fas fa-check-circle toast-icon"></i>
+    <span id="toastMessage">Status updated and notification sent!</span>
+</div>

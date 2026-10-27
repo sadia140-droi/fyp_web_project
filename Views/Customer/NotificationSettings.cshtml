@@ -1,0 +1,85 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Notification Settings";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+<div class="customer-settings-page">
+    <div class="settings-header">
+        <h2>
+            <i class="fas fa-bell"></i>
+            Notification Settings
+        </h2>
+        <p>Choose what you want to be notified about</p>
+    </div>
+
+    <div class="settings-container" style="max-width: 600px; margin: 0 auto;">
+        
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success" style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                @TempData["Success"]
+            </div>
+        }
+
+        <div class="settings-card" style="padding: 30px;">
+            <form asp-controller="Customer" asp-action="NotificationSettings" method="post">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                    <div>
+                        <h4 style="margin: 0; color: #333; font-size: 16px;">Order Updates</h4>
+                        <p style="margin: 5px 0 0; color: #777; font-size: 14px;">Get real-time updates on your order status</p>
+                    </div>
+                    <div>
+                        <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                            <input type="checkbox" name="orderUpdates" value="true" checked style="opacity: 0; width: 0; height: 0;">
+                            <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #5D4037; border-radius: 24px;"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                    <div>
+                        <h4 style="margin: 0; color: #333; font-size: 16px;">Promotional Emails</h4>
+                        <p style="margin: 5px 0 0; color: #777; font-size: 14px;">Receive exclusive deals and discounts</p>
+                    </div>
+                    <div>
+                        <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                            <input type="checkbox" name="promotions" value="true" style="opacity: 0; width: 0; height: 0;">
+                            <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; border-radius: 24px;"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; display: flex; gap: 15px;">
+                    <a asp-action="Settings" class="btn btn-secondary" style="padding: 12px 24px; border-radius: 8px; text-decoration: none; color: #555; background-color: #f1f1f1; border: none; font-weight: bold; flex: 1; text-align: center;">Cancel</a>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 24px; border-radius: 8px; color: #fff; background-color: #5D4037; border: none; font-weight: bold; flex: 1;">Save Preferences</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Pure CSS Toggle Switch logic to make it beautiful */
+.switch input:checked + .slider {
+    background-color: #5D4037 !important;
+}
+.switch input:focus + .slider {
+    box-shadow: 0 0 1px #5D4037;
+}
+.switch input:checked + .slider:before {
+    transform: translateX(26px);
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+</style>

@@ -1,0 +1,840 @@
+@model Cloud_Kitchen_web_App.Models.KitchenMenuViewModel
+
+@{
+    ViewData["Title"] = $"{Model.KitchenName} — Menu";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --soft-orange: #FFB347;
+            --beige: #F5E6CA;
+            --light-beige: #F8EEDC;
+            --dark-brown: #5D4037;
+            --muted: #6b6b6b;
+            --white: #fff;
+            --card-shadow: 0 14px 40px rgba(92,64,55,0.08);
+        }
+
+        body {
+            font-family: "Poppins", sans-serif;
+            color: #444;
+            background: var(--beige);
+            overflow-x: hidden;
+        }
+
+        /* =========================
+                   HERO SECTION
+                ========================= */
+
+        .hero {
+            position: relative;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('@Model.Image') center/cover;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 0 0 24px 24px;
+        }
+
+        .back-nav {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+            cursor: pointer;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+            .back-nav:hover {
+                background: var(--soft-orange);
+                color: var(--dark-brown);
+            }
+
+        .hero-content h1 {
+            font-weight: 900;
+            font-size: 3.2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .rating-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            font-weight: 600;
+        }
+
+        /* =========================
+                   KITCHEN INFORMATION
+                ========================= */
+
+        .kitchen-info-wrapper {
+            margin-top: -50px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .kitchen-info {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            border-bottom: 4px solid var(--soft-orange);
+        }
+
+        .meta-tags span {
+            background: var(--light-beige);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--dark-brown);
+            margin-right: 10px;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+
+        /* =========================
+                   CATEGORY
+                ========================= */
+
+        .category-title {
+            font-weight: 900;
+            font-size: 1.6rem;
+            color: var(--dark-brown);
+            margin: 40px 0 20px;
+            border-left: 6px solid var(--soft-orange);
+            padding-left: 15px;
+        }
+
+        /* =========================
+                   FOOD CARD
+                ========================= */
+
+        .food-card {
+            background: var(--white);
+            border-radius: 18px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--card-shadow);
+            transition: 0.3s;
+            border: 1px solid rgba(0,0,0,0.05);
+            cursor: pointer;
+            height: 100%;
+        }
+
+            .food-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            }
+
+        .food-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .food-details {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .food-name {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--dark-brown);
+            margin-bottom: 8px;
+        }
+
+        .food-desc {
+            font-size: 0.85rem;
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .price {
+            font-weight: 900;
+            color: var(--dark-brown);
+            font-size: 1.3rem;
+        }
+
+        /* =========================
+                   ADD BUTTON
+                ========================= */
+
+        .add-btn {
+            background: var(--soft-orange);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            color: var(--dark-brown);
+            transition: 0.2s;
+        }
+
+            .add-btn:hover {
+                background: var(--dark-brown);
+                color: white;
+            }
+
+        /* =========================
+                   EMPTY MENU
+                ========================= */
+
+        .empty-menu {
+            background: white;
+            border-radius: 20px;
+            padding: 50px 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        /* =========================
+                   RESPONSIVE
+                ========================= */
+
+        @@media (max-width: 768px) {
+
+            .hero {
+                height: 250px;
+                border-radius: 0 0 18px 18px;
+            }
+
+            .hero-content h1 {
+                font-size: 2.2rem;
+            }
+
+            .kitchen-info-wrapper {
+                margin-top: -30px;
+            }
+
+            .food-img {
+                height: 180px;
+            }
+        }
+    </style>
+}
+
+<!-- ================================
+     HERO SECTION
+================================ -->
+
+<div class="hero">
+
+    <a asp-controller="Customer"
+       asp-action="Index"
+       class="back-nav">
+
+        <i class="fas fa-chevron-left"></i>
+        Back to Home
+
+    </a>
+
+    <div class="hero-content">
+
+        <h1>
+            @Model.KitchenName
+        </h1>
+
+        <div class="rating-badge">
+
+            <i class="fas fa-star"
+               style="color:#FFD700;"></i>
+
+            @if (Model.TotalReviews > 0)
+            {
+                <span>@Model.Rating.ToString("0.0") (@Model.TotalReviews @(Model.TotalReviews == 1 ? "review" : "reviews"))</span>
+            }
+            else
+            {
+                <span>New</span>
+            }
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================================
+     MAIN CONTENT
+================================ -->
+
+<main class="container mb-5">
+
+    <!-- Kitchen Information -->
+
+    <div class="kitchen-info-wrapper">
+
+        <div class="kitchen-info
+                    d-flex
+                    flex-column
+                    flex-md-row
+                    justify-content-between
+                    align-items-md-center
+                    gap-3">
+
+            <div>
+
+                <div class="meta-tags">
+
+                    <span>
+                        <i class="fas fa-bicycle"></i>
+                        Rs. @Model.DeliveryRatePerKm.ToString("G29") per km
+                    </span>
+
+                    <span>
+                        <i class="fas fa-clock"></i>
+                        @(string.IsNullOrWhiteSpace(Model.DeliveryTime) ? "30 mins" : Model.DeliveryTime)
+                    </span>
+
+                </div>
+
+                <p class="mt-2 text-muted small mb-0 fw-medium">
+
+                    Serving love through homemade spices
+                    and fresh ingredients.
+
+                </p>
+
+            </div>
+
+
+            <div class="text-md-end">
+
+                <p class="fw-bold
+                          text-muted
+                          small
+                          text-uppercase
+                          mb-1">
+
+                    Minimum Order
+
+                </p>
+
+                <p class="fs-4 mb-0"
+                   style="
+                       color:var(--dark-brown);
+                       font-weight:900;
+                   ">
+
+                    Rs. @Model.MinOrder.ToString("N0")
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================
+         MENU
+    ================================ -->
+
+    <div class="menu-section mt-4">
+
+        @if (Model.Categories != null &&
+                Model.Categories.Any())
+        {
+
+            @foreach (var category in Model.Categories)
+            {
+
+                <!-- Category Heading -->
+
+                <h2 class="category-title">
+
+                    @category.CategoryName
+
+                </h2>
+
+
+                <!-- Food Items -->
+
+                <div class="row g-4">
+
+                    @if (category.Items != null &&
+                                category.Items.Any())
+                    {
+
+                        @foreach (var item in category.Items)
+                        {
+
+                            <div class="col-12 col-md-6">
+
+                                <div class="food-card"
+                                     onclick="navigateToDetail(@item.Id)">
+
+                                    <!-- Food Image -->
+
+                                    <img src="@item.Image"
+                                         class="food-img"
+                                         alt="@item.Name" />
+
+
+                                    <!-- Food Details -->
+
+                                    <div class="food-details">
+
+                                        <div class="food-name">
+
+                                            @item.Name
+
+                                        </div>
+
+
+                                        <p class="food-desc">
+
+                                            @item.Description
+
+                                        </p>
+
+
+                                        <div class="
+                                                            food-footer
+                                                            d-flex
+                                                            justify-content-between
+                                                            align-items-center
+                                                            mt-auto">
+
+                                            <!-- Price -->
+
+                                            <span class="price">
+
+                                                Rs. @item.Price
+
+                                            </span>
+
+
+                                            <!-- Add Button -->
+
+                                            <button type="button"
+                                                    class="add-btn"
+                                                    data-id="@item.Id"
+                                                    data-name="@item.Name"
+                                                    data-price="@item.Price"
+                                                    data-img="@item.Image"
+                                                    onclick="addToCartItemHandler(event, this)">
+
+                                                <i class="fas fa-plus"></i>
+
+                                                Add
+
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        }
+
+                    }
+                    else
+                    {
+
+                        <div class="col-12">
+
+                            <p class="text-muted">
+                                No items available in this category.
+                            </p>
+
+                        </div>
+
+                    }
+
+                </div>
+
+            }
+
+        }
+        else
+        {
+
+            <!-- No Menu -->
+
+            <div class="empty-menu text-center">
+
+                <i class="fas fa-utensils mb-3"
+                   style="
+                           font-size:48px;
+                           color:#ddd;
+                       "></i>
+
+                <h5 style="color:var(--dark-brown);">
+
+                    No items available
+
+                </h5>
+
+                <p class="text-muted mb-0">
+
+                    This kitchen has not added any menu
+                    items yet.
+
+                </p>
+
+            </div>
+
+        }
+
+    </div>
+
+    <!-- ================================
+         REVIEWS SECTION
+    ================================ -->
+    <div class="reviews-section mt-5" id="customerReviewsSection">
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+            <div>
+                <h3 style="color:var(--dark-brown); font-weight:800; margin:0; font-size:24px;">
+                    <i class="fas fa-star me-2" style="color:#FFD700;"></i>Customer Reviews
+                </h3>
+                <p class="text-muted small mb-0 mt-1">
+                    Real feedback and ratings from customers who ordered from @Model.KitchenName
+                </p>
+            </div>
+        </div>
+
+        @if (Model.TotalReviews > 0)
+        {
+            <!-- TOP RATING SUMMARY CARD -->
+            <div class="card p-4 mb-4 border-0"
+                 style="background:#fff; border-radius:18px; box-shadow:0 8px 24px rgba(0,0,0,0.06); border:1px solid #f0e6da !important;">
+                <div class="row align-items-center g-4">
+                    <!-- Overall Score -->
+                    <div class="col-md-4 text-center border-md-end" style="border-color:#f0e6da !important;">
+                        <div style="font-size:54px; font-weight:800; color:var(--dark-brown); line-height:1;">
+                            @Model.Rating.ToString("0.0")
+                        </div>
+                        <div class="my-2" style="font-size:20px; color:#FFD700;">
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                if (s <= Math.Round(Model.Rating))
+                                {
+                                    <i class="fas fa-star"></i>
+                                }
+                                else
+                                {
+                                    <i class="far fa-star text-muted" style="opacity:0.35;"></i>
+                                }
+                            }
+                        </div>
+                        <div class="text-muted small fw-medium">
+                            Based on @Model.TotalReviews @(Model.TotalReviews == 1 ? "verified review" : "verified reviews")
+                        </div>
+                    </div>
+
+                    <!-- 5 to 1 Star Breakdown Progress Bars -->
+                    <div class="col-md-8">
+                        @{
+                            var starBreakdowns = new[]
+                            {
+                                new { Star = 5, Count = Model.FiveStarCount },
+                                new { Star = 4, Count = Model.FourStarCount },
+                                new { Star = 3, Count = Model.ThreeStarCount },
+                                new { Star = 2, Count = Model.TwoStarCount },
+                                new { Star = 1, Count = Model.OneStarCount }
+                            };
+                        }
+
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var sb in starBreakdowns)
+                            {
+                                var pct = Model.TotalReviews > 0 ? (int)Math.Round((double)sb.Count / Model.TotalReviews * 100) : 0;
+                                <div class="d-flex align-items-center gap-2" style="font-size:13px;">
+                                    <div style="width:55px; font-weight:600; color:var(--dark-brown);">
+                                        @sb.Star <i class="fas fa-star" style="color:#FFD700; font-size:12px;"></i>
+                                    </div>
+                                    <div class="progress flex-grow-1" style="height:10px; border-radius:6px; background:#f0ece6;">
+                                        <div class="progress-bar"
+                                             role="progressbar"
+                                             style="width: @pct%; background: linear-gradient(90deg, #FFB347, #f39a24); border-radius:6px;"
+                                             aria-valuenow="@pct"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <div class="text-muted text-end" style="width:75px; font-weight:500;">
+                                        @sb.Count (@pct%)
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REVIEWS LIST -->
+            <div class="row g-3">
+                @foreach (var review in Model.Reviews)
+                {
+                    <div class="col-md-6">
+                        <div class="p-3 bg-white h-100"
+                             style="border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,0.05); border:1px solid #f2ede7;">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="fw-bold" style="color:var(--dark-brown); font-size:15px;">
+                                            <i class="fas fa-circle-user text-muted me-1"></i>@review.CustomerFirstName
+                                        </span>
+                                        <span class="badge"
+                                              style="background:#eaf7ee; color:#2e7d32; font-weight:600; font-size:11px; padding:3px 8px; border-radius:12px;">
+                                            <i class="fas fa-check-circle me-1"></i>Verified order
+                                        </span>
+                                    </div>
+                                    <div class="mt-1" style="color:#FFD700; font-size:13px;">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= review.Rating)
+                                            {
+                                                <i class="fas fa-star"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="far fa-star text-muted" style="opacity:0.35;"></i>
+                                            }
+                                        }
+                                        <span class="text-muted ms-1 small fw-bold">@review.Rating/5</span>
+                                    </div>
+                                </div>
+                                <span class="text-muted small" style="font-size:12px;">
+                                    @review.CreatedAt.ToString("dd MMM yyyy")
+                                </span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(review.Comment))
+                            {
+                                <p class="mb-0 small" style="color:#4a3f35; line-height:1.55; font-style:italic;">
+                                    "@review.Comment"
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="text-muted mb-0 small" style="font-style:italic;">
+                                    No written comment provided.
+                                </p>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <!-- EMPTY REVIEWS STATE -->
+            <div class="p-5 bg-white text-center"
+                 style="border-radius:18px; box-shadow:0 8px 24px rgba(0,0,0,0.05); border:1px solid #f0e6da;">
+                <i class="fa-regular fa-comment-dots mb-3" style="font-size:46px; color:#FFB347;"></i>
+                <h4 style="color:var(--dark-brown); font-weight:700;">No reviews yet</h4>
+                <p class="text-muted mb-0">Be the first to order and review!</p>
+            </div>
+        }
+    </div>
+
+</main>
+
+
+@section Scripts {
+
+    <script>
+
+        /* ==========================================
+           CURRENT KITCHEN
+        ========================================== */
+
+        const currentKitchenName =
+            @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.KitchenName));
+            
+        const currentKitchenId = @Model.KitchenId;
+        const currentKitchenDeliveryRate = @Model.DeliveryRatePerKm;
+        const currentKitchenLat = @Model.Lat;
+        const currentKitchenLng = @Model.Lng;
+        const currentKitchenMinOrder = @Model.MinOrder;
+
+
+        /* ==========================================
+           ADD ITEM TO CART
+           Uses _CustomerLayout cart system
+        ========================================== */
+
+        window.addToCartItemHandler = function (event, button) {
+
+            event.stopPropagation();
+
+            const name =
+                button.getAttribute("data-name");
+
+            const price =
+                parseFloat(
+                    button.getAttribute("data-price")
+                ) || 0;
+
+            const img =
+                button.getAttribute("data-img");
+                
+            const menuItemId = 
+                parseInt(
+                    button.getAttribute("data-id")
+                ) || 0;
+
+
+            const storageKey = (typeof window.getCartStorageKey === "function")
+                ? window.getCartStorageKey()
+                : ("kitchenCarts_" + encodeURIComponent((window.currentUserEmail || "guest").trim().toLowerCase()));
+
+            let kitchenCarts = {};
+
+            try {
+                if (localStorage.getItem("kitchenCarts")) {
+                    localStorage.removeItem("kitchenCarts"); // Purge legacy shared cart
+                }
+                kitchenCarts =
+                    JSON.parse(
+                        localStorage.getItem(storageKey)
+                    ) || {};
+
+            }
+            catch (error) {
+
+                kitchenCarts = {};
+
+            }
+
+
+            /* Create kitchen cart */
+
+            if (!kitchenCarts[currentKitchenName]) {
+
+                kitchenCarts[currentKitchenName] = [];
+
+            }
+
+
+            /* Check existing item */
+
+            const existingItem =
+                kitchenCarts[currentKitchenName]
+                    .find(item => item.name === name);
+
+
+            if (existingItem) {
+
+                existingItem.qty += 1;
+                existingItem.menuItemId = menuItemId;
+                existingItem.kitchenId = currentKitchenId;
+                existingItem.deliveryRatePerKm = currentKitchenDeliveryRate;
+                existingItem.kitchenLat = currentKitchenLat;
+                existingItem.kitchenLng = currentKitchenLng;
+                existingItem.minOrder = currentKitchenMinOrder;
+
+            }
+            else {
+
+                kitchenCarts[currentKitchenName].push({
+
+                    menuItemId: menuItemId,
+
+                    kitchenId: currentKitchenId,
+
+                    name: name,
+
+                    price: price,
+
+                    img: img,
+
+                    kitchen: currentKitchenName,
+
+                    deliveryRatePerKm: currentKitchenDeliveryRate,
+
+                    kitchenLat: currentKitchenLat,
+
+                    kitchenLng: currentKitchenLng,
+
+                    minOrder: currentKitchenMinOrder,
+
+                    qty: 1
+
+                });
+
+            }
+
+
+            /* Save cart */
+
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify(kitchenCarts)
+            );
+            localStorage.removeItem("kitchenCarts");
+
+
+            /* Refresh cart from Layout */
+
+            if (
+                typeof window.refreshCartLayoutView ===
+                "function"
+            ) {
+
+                window.refreshCartLayoutView();
+
+            }
+
+
+            /* Open Layout Cart Drawer */
+
+            const cartDrawer =
+                document.getElementById("cartDrawer");
+
+            const drawerOverlay =
+                document.getElementById("drawerOverlay");
+
+
+            if (cartDrawer &&
+                drawerOverlay) {
+
+                cartDrawer.classList.add("active");
+
+                drawerOverlay.classList.add("active");
+
+            }
+
+        };
+
+
+        /* ==========================================
+           FOOD ITEM DETAILS
+        ========================================== */
+
+        window.navigateToDetail = function (id) {
+
+            window.location.href =
+                `/Customer/ItemDetails?id=${id}`;
+
+        };
+
+    </script>
+
+}

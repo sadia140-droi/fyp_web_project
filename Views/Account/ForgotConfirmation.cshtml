@@ -1,0 +1,57 @@
+@{
+    ViewData["Title"] = "Password Reset";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="forgot-container">
+
+    <h2>Check Your Email</h2>
+
+    <p>
+        If an account exists with the email address you entered,
+        password reset instructions have been sent to your email.
+    </p>
+
+    <div class="success-message">
+
+        <p>
+            Please check your inbox and follow the password reset
+            link to create a new password.
+        </p>
+
+        <p>
+            If you don't see the email, please check your
+            spam or junk folder.
+        </p>
+
+    </div>
+
+    @if (TempData["DevResetLink"] != null)
+    {
+        <div style="margin: 20px 0; padding: 14px 16px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; text-align: center;">
+            <p style="margin: 0 0 10px 0; font-size: 0.85rem; color: #92400E; font-weight: 600;">
+                Direct Reset Link (Local Testing):
+            </p>
+            <a href="@TempData["DevResetLink"]"
+               style="display: inline-block; background: var(--dark-brown); color: #ffffff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">
+                Click to Reset Password
+            </a>
+        </div>
+    }
+
+    <div class="back-links">
+
+        <a asp-controller="Account"
+           asp-action="Login">
+            Back to Login
+        </a>
+
+    </div>
+
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="back-home">
+        ← Back to Home
+    </a>
+
+</div>

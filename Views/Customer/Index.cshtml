@@ -1,0 +1,2087 @@
+@model Cloud_Kitchen_web_App.Models.KitchenPageViewModel
+
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Customer - Kitchen List";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+
+    var locations = Model.Locations ?? new List<Cloud_Kitchen_web_App.Models.LocationViewModel>();
+}
+
+@section Styles {
+
+    <style>
+
+        :root {
+            --soft-orange: #FFB347;
+            --dark-brown: #5D4037;
+            --white: #ffffff;
+            --light-bg: #fcfcfc;
+        }
+
+        /* =========================================================
+                   HERO
+                ========================================================= */
+
+        .hero {
+            width: 100%;
+            min-height: 540px;
+            border-radius: 30px;
+            background: url('/images/14.JPG') center center / cover no-repeat;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 55px 30px;
+            box-sizing: border-box;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient( 90deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.58) 45%, rgba(0,0,0,0.68) 100% );
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 1050px;
+            margin: 0 auto;
+            text-align: center;
+            color: white;
+        }
+
+            .hero-content h1 {
+                font-size: 44px;
+                font-weight: 900;
+                margin-bottom: 12px;
+                line-height: 1.2;
+            }
+
+            .hero-content p {
+                font-size: 17px;
+                margin-bottom: 28px;
+                color: #f4f4f4;
+                font-weight: 500;
+            }
+
+        /* =========================================================
+                   LOCATION SWITCH
+                ========================================================= */
+
+        .location-switch-container {
+            width: 100%;
+            display: flex;
+            background: rgba(0, 0, 0, 0.48);
+            padding: 6px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(255,255,255,0.18);
+            backdrop-filter: blur(5px);
+        }
+
+        .loc-tab-btn {
+            flex: 1;
+            min-height: 50px;
+            padding: 12px 15px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 11px;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+            .loc-tab-btn:hover {
+                background: rgba(255,255,255,0.12);
+            }
+
+            .loc-tab-btn.active {
+                background: var(--soft-orange);
+                color: var(--dark-brown);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            }
+
+        /* =========================================================
+                   LOCATION INPUT
+                ========================================================= */
+
+        .location-input-row {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .dropdown-group select {
+            width: 100%;
+            padding: 15px;
+            border-radius: 14px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            outline: none;
+            background: white;
+            color: #333;
+            box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+        }
+
+        .gps-trigger-btn {
+            width: 100%;
+            padding: 15px;
+            border-radius: 14px;
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            outline: none;
+            background: white;
+            color: var(--dark-brown);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+            transition: 0.3s;
+        }
+
+            .gps-trigger-btn:hover {
+                background: #fff8ed;
+                transform: translateY(-2px);
+            }
+
+            .gps-trigger-btn:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        /* =========================================================
+                   GPS STATUS
+                ========================================================= */
+
+        #gpsStatus {
+            display: none;
+            margin-top: 10px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.94);
+            color: var(--dark-brown);
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* =========================================================
+                   SEARCH
+                ========================================================= */
+
+        .hero-search {
+            width: 100%;
+        }
+
+            .hero-search input {
+                width: 100%;
+                height: 58px;
+                padding: 16px 18px;
+                border: none;
+                border-radius: 15px;
+                font-size: 14px;
+                outline: none;
+                box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+            }
+
+            .hero-search button {
+                width: 100%;
+                height: 58px;
+                padding: 16px 20px;
+                border: none;
+                border-radius: 15px;
+                background: var(--soft-orange);
+                font-weight: 800;
+                cursor: pointer;
+                color: var(--dark-brown);
+                box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+                transition: 0.3s;
+            }
+
+                .hero-search button:hover {
+                    background: #ffca70;
+                    transform: translateY(-2px);
+                }
+
+        /* =========================================================
+                   SECTION TITLE
+                ========================================================= */
+
+        .section-title h2 {
+            font-size: 28px;
+            color: var(--dark-brown);
+            font-weight: 800;
+        }
+
+        /* =========================================================
+                   CATEGORIES
+                ========================================================= */
+
+        .categories-scroll {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            padding: 5px 5px 15px;
+            scroll-behavior: smooth;
+        }
+
+        .category-card {
+            min-width: 140px;
+            background: white;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            flex-shrink: 0;
+        }
+
+            .category-card:hover {
+                transform: translateY(-5px) scale(1.03);
+                box-shadow: 0 15px 35px rgba(0,0,0,0.14);
+            }
+
+            .category-card img {
+                width: 100%;
+                height: 100px;
+                object-fit: cover;
+            }
+
+            .category-card span {
+                display: block;
+                padding: 12px;
+                text-align: center;
+                font-weight: 700;
+                color: var(--dark-brown);
+            }
+
+        /* =========================================================
+                   FILTERS
+                ========================================================= */
+
+        .filters select {
+            padding: 14px 18px;
+            border: none;
+            border-radius: 14px;
+            background: white;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.088);
+            font-weight: 600;
+            color: var(--dark-brown);
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* =========================================================
+           KITCHENS GRID & RESPONSIVENESS
+        ========================================================= */
+
+        #kitchensGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 390px));
+            justify-content: center;
+            gap: 28px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        @@media (max-width: 768px) {
+            #kitchensGrid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .kitchen-col {
+            width: 100%;
+            display: flex;
+        }
+
+        /* =========================================================
+           KITCHEN CARD
+        ========================================================= */
+
+        .food-card {
+            background: #ffffff;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .food-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+        }
+
+        .card-image {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            background: #f1f5f9;
+        }
+
+        .card-image::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.4) 100%);
+            pointer-events: none;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .food-card:hover .card-image img {
+            transform: scale(1.06);
+        }
+
+        /* =========================================================
+           IMAGE BADGES (OPEN/CLOSED, RATING, FAVORITE)
+        ========================================================= */
+
+        .delivery-badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            padding: 6px 13px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+            z-index: 2;
+        }
+
+        .delivery-badge.open {
+            background: rgba(34, 197, 94, 0.92);
+            color: #ffffff;
+        }
+
+        .delivery-badge.closed {
+            background: rgba(239, 68, 68, 0.92);
+            color: #ffffff;
+        }
+
+        .badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            display: inline-block;
+            animation: pulse-dot 1.8s infinite ease-in-out;
+        }
+
+        @@keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        .rating-badge {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 6px 13px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 12.5px;
+            color: #1f2937;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 2;
+        }
+
+        .rating-badge i {
+            color: #f59e0b;
+        }
+
+        .fav-btn {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            cursor: pointer;
+            font-size: 17px;
+            color: #64748b;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .fav-btn:hover {
+            transform: scale(1.12);
+            background: #ffffff;
+            color: #ef4444;
+        }
+
+        .fav-btn.active {
+            color: #ef4444;
+            background: #ffffff;
+        }
+
+        /* =========================================================
+           CARD BODY & TYPOGRAPHY
+        ========================================================= */
+
+        .food-card .card-body {
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .kitchen-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 6px;
+            width: 100%;
+        }
+
+        .kitchen-name {
+            color: #1f2937;
+            font-size: 1.18rem;
+            font-weight: 700;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1 1 auto;
+            min-width: 0;
+            line-height: 1.3;
+        }
+
+        .distance-chip {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #fff5e6;
+            color: #e67e22;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 11.5px;
+            font-weight: 700;
+            white-space: nowrap;
+            border: 1px solid rgba(230, 126, 34, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        .distance-chip.set-loc {
+            cursor: pointer;
+        }
+
+        .distance-chip.set-loc:hover {
+            background: #ffe8cc;
+            color: #d35400;
+            border-color: #d35400;
+            transform: translateY(-1px);
+        }
+
+        .kitchen-location {
+            color: #64748b;
+            font-size: 13.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .kitchen-location i {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .kitchen-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 12.5px;
+            color: #475569;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .kitchen-meta-row .meta-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .kitchen-meta-row .meta-item i {
+            color: #e67e22;
+            font-size: 13px;
+        }
+
+        .kitchen-tags-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+            min-height: 24px;
+        }
+
+        .kitchen-tags-row span {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* =========================================================
+           VIEW MENU BUTTON
+        ========================================================= */
+
+        .card-footer-action {
+            margin-top: auto;
+            padding-top: 6px;
+            width: 100%;
+        }
+
+        .view-btn {
+            width: 100%;
+            padding: 13px 20px;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            background: linear-gradient(135deg, #5D4037 0%, #4E342E 100%);
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(93, 64, 55, 0.22);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+        }
+
+        .view-btn:hover {
+            background: linear-gradient(135deg, #4E342E 0%, #3E2723 100%);
+            box-shadow: 0 6px 18px rgba(93, 64, 55, 0.35);
+            transform: translateY(-2px);
+        }
+
+        /* =========================================================
+                   NO RESULTS
+                ========================================================= */
+
+        .no-results-box {
+            width: 100%;
+            text-align: center;
+            padding: 50px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        }
+
+            .no-results-box i {
+                font-size: 42px;
+                color: var(--soft-orange);
+                margin-bottom: 15px;
+            }
+
+            .no-results-box h3 {
+                color: var(--dark-brown);
+                font-weight: 800;
+            }
+
+            .no-results-box p {
+                color: #777;
+            }
+
+        /* =========================================================
+                   RESPONSIVE
+                ========================================================= */
+
+        @@media (max-width: 768px) {
+
+            .hero {
+                min-height: 590px;
+                padding: 40px 15px;
+                border-radius: 22px;
+            }
+
+            .hero-content {
+                max-width: 100%;
+            }
+
+                .hero-content h1 {
+                    font-size: 32px;
+                }
+
+                .hero-content p {
+                    font-size: 14px;
+                }
+
+            .location-switch-container {
+                flex-direction: column;
+            }
+
+            .loc-tab-btn {
+                width: 100%;
+            }
+        }
+
+        @@media (max-width: 576px) {
+
+            .hero {
+                padding: 35px 12px;
+            }
+
+            .hero-content h1 {
+                font-size: 28px;
+            }
+
+            .category-card {
+                min-width: 125px;
+            }
+
+            .card-image {
+                height: 220px;
+            }
+        }
+
+    </style>
+}
+
+
+<!-- ============================================================
+     HERO SECTION
+============================================================ -->
+
+<div class="container-fluid px-3 px-md-4 my-4">
+
+    <section class="hero">
+
+        <div class="hero-overlay"></div>
+
+        <div class="hero-content">
+
+            <h1>
+                Delicious Food Delivered To Your Door
+            </h1>
+
+            <p>
+                Find the best nearby kitchens within 5KM range
+            </p>
+
+            <!-- LOCATION SWITCH -->
+
+            <div class="row justify-content-center w-100 m-0">
+
+                <div class="col-12 col-lg-10 p-0">
+
+                    <div class="location-switch-container">
+
+                        <button type="button"
+                                class="loc-tab-btn active"
+                                id="tabManualBtn"
+                                onclick="switchLocationMode('manual')">
+
+                            <i class="fas fa-map-marker-alt"></i>
+
+                            Manual Selection (City-Wise)
+
+                        </button>
+
+                        <button type="button"
+                                class="loc-tab-btn"
+                                id="tabGpsBtn"
+                                onclick="switchLocationMode('gps')">
+
+                            <i class="fas fa-crosshairs"></i>
+
+                            Live GPS Auto-Detect
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- MANUAL LOCATION -->
+
+                    <div class="location-input-row"
+                         id="manualLocationRow">
+
+                        <div class="row g-2 dropdown-group">
+
+                            <div class="col-12 col-sm-6">
+
+                                <select id="cityDropdown"
+                                        class="form-select border-0"
+                                        onchange="handleCityDropdownChange()">
+
+                                    <option value=""
+                                            disabled
+                                            selected>
+
+                                        -- Select City --
+
+                                    </option>
+
+                                    @{
+                                        var cityNames = locations
+                                        .Select(x => (string)x.City)
+                                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                                        .Distinct()
+                                        .OrderBy(x => x)
+                                        .ToList();
+                                    }
+
+                                    @if(cityNames.Count == 0)
+                                    {
+                                        <option value="" disabled>-- No Cities Available --</option>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var city in cityNames)
+                                        {
+                                            <option value="@city">
+                                                @city
+                                            </option>
+                                        }
+                                    }
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="col-12 col-sm-6">
+
+                                <select id="areaDropdown"
+                                        class="form-select border-0"
+                                        onchange="handleAreaDropdownChange()"
+                                        disabled>
+
+                                    <option value=""
+                                            disabled
+                                            selected>
+
+                                        -- Select Area --
+
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- GPS LOCATION -->
+
+                    <div class="location-input-row"
+                         id="gpsLocationRow"
+                         style="display:none;">
+
+                        <button type="button"
+                                class="gps-trigger-btn"
+                                id="gpsButton"
+                                onclick="initSearchLocationService(false)">
+
+                            <i class="fas fa-satellite-dish"></i>
+
+                            <span id="gpsButtonText">
+                                Fetch My Exact GPS Coordinates
+                            </span>
+
+                        </button>
+
+                        <div id="gpsStatus"></div>
+
+                    </div>
+
+
+                    <!-- SEARCH -->
+
+                    <div class="hero-search mt-3">
+
+                        <div class="row g-2 w-100 m-0 align-items-center">
+
+                            <div class="col-12 col-sm-9 p-0 pe-sm-2">
+
+                                <input type="text"
+                                       id="searchInput"
+                                       class="form-control"
+                                       value="@Context.Request.Query["searchQuery"]"
+                                       placeholder="What are you craving today? (e.g. Biryani, Pizza...)" />
+
+                            </div>
+
+                            <div class="col-12 col-sm-3 p-0">
+
+                                <button type="button"
+                                        id="searchBtn"
+                                        onclick="executeCombinedSearchPipeline(true)">
+
+                                    <i class="fas fa-search"></i>
+
+                                    Search
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- ============================================================
+     POPULAR CATEGORIES
+============================================================ -->
+
+<section class="container my-5">
+
+    <div class="section-title mb-4">
+
+        <h2>
+            Popular Categories
+        </h2>
+
+    </div>
+
+    <div class="categories-scroll">
+
+        @foreach (var category in Model.Categories)
+        {
+            <div class="category-card"
+                 onclick="filterByCategory('@category.Name.Replace("'", "\\'")')">
+
+                <img src="@category.ImagePath"
+                     alt="@category.Name">
+
+                <span>
+                    @category.Name
+                </span>
+
+            </div>
+        }
+
+    </div>
+
+</section>
+
+
+<!-- ============================================================
+     SORTING
+============================================================ -->
+
+<section class="container my-4">
+
+    <div class="row g-2 filters">
+
+        <div class="col-12 col-md-4">
+
+            <select id="sortFilterDropdown"
+                    class="form-select border-0 w-100"
+                    onchange="executeCombinedSearchPipeline(true)">
+
+                <option value="all">
+                    Default Sorting
+                </option>
+
+                <option value="rating">
+                    Top Rated (Highest First)
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ============================================================
+     KITCHENS
+============================================================ -->
+
+<section class="container my-5"
+         id="targetKitchensSection">
+
+    <div class="section-title mb-4">
+
+        <h2>
+            Nearby Kitchens
+        </h2>
+
+    </div>
+
+    <div id="kitchensGrid">
+    </div>
+
+</section>
+
+
+@section Scripts {
+
+    <script>
+
+        /* =========================================================
+           ELEMENTS
+        ========================================================= */
+
+        const kitchensGrid =
+            document.getElementById('kitchensGrid');
+
+        const searchInput =
+            document.getElementById('searchInput');
+
+        const sortFilterDropdown =
+            document.getElementById('sortFilterDropdown');
+
+        const tabManualBtn =
+            document.getElementById('tabManualBtn');
+
+        const tabGpsBtn =
+            document.getElementById('tabGpsBtn');
+
+        const manualLocationRow =
+            document.getElementById('manualLocationRow');
+
+        const gpsLocationRow =
+            document.getElementById('gpsLocationRow');
+
+        const cityDropdown =
+            document.getElementById('cityDropdown');
+
+        const areaDropdown =
+            document.getElementById('areaDropdown');
+
+        const targetKitchensSection =
+            document.getElementById('targetKitchensSection');
+
+        const gpsButton =
+            document.getElementById('gpsButton');
+
+        const gpsButtonText =
+            document.getElementById('gpsButtonText');
+
+        const gpsStatus =
+            document.getElementById('gpsStatus');
+
+
+        /* =========================================================
+           SETTINGS
+        ========================================================= */
+
+        const MAX_DISTANCE_KM = 5;
+
+        const urlParamsLocation = new URLSearchParams(window.location.search);
+        let cachedUserLat = urlParamsLocation.has('latitude') ? parseFloat(urlParamsLocation.get('latitude')) : null;
+        let cachedUserLng = urlParamsLocation.has('longitude') ? parseFloat(urlParamsLocation.get('longitude')) : null;
+
+        let currentMode = (cachedUserLat !== null && cachedUserLng !== null) ? "gps" : "manual";
+
+        let favoriteKitchenIds = new Set();
+
+
+        /* =========================================================
+           REAL DATA FROM SERVER
+        ========================================================= */
+
+        @{
+            var now = DateTime.Now;
+            var rawKitchens = Model.Kitchens ?? new List<Cloud_Kitchen_web_App.Models.KitchenViewModel>();
+            var enrichedKitchens = rawKitchens.Select(k => new {
+                Id = k.Id,
+                Name = k.Name,
+                Image = k.Image,
+                Rating = k.Rating,
+                Time = k.Time,
+                Lat = k.Lat,
+                Lng = k.Lng,
+                City = k.City,
+                Area = k.Area,
+                Tags = k.Tags,
+                DefaultFood = k.DefaultFood,
+                DefaultPrice = k.DefaultPrice,
+                IsOpen = k.IsOpen,
+                OpeningTime = k.OpeningTime,
+                ClosingTime = k.ClosingTime,
+                DeliveryRatePerKm = k.DeliveryRatePerKm,
+                MinOrder = k.MinOrder,
+                CurrentDate = now.ToString("dd MMM yyyy"),
+                CurrentTime = now.ToString("hh:mm tt")
+            }).ToList();
+        }
+
+        const kitchensData =
+            @Html.Raw(JsonSerializer.Serialize(enrichedKitchens));
+
+        const locationsData =
+            @Html.Raw(JsonSerializer.Serialize(locations));
+
+
+        /* =========================================================
+           ANTI-FORGERY TOKEN
+        ========================================================= */
+
+        const antiForgeryToken =
+            document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            )?.value || "";
+
+
+        /* =========================================================
+           DISTANCE CALCULATOR
+        ========================================================= */
+
+        function getDistanceKM(
+            lat1,
+            lon1,
+            lat2,
+            lon2
+        ) {
+
+            const R = 6371;
+
+            const dLat =
+                (lat2 - lat1) *
+                Math.PI / 180;
+
+            const dLon =
+                (lon2 - lon1) *
+                Math.PI / 180;
+
+            const a =
+                Math.sin(dLat / 2) *
+                Math.sin(dLat / 2)
+
+                +
+
+                Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) *
+
+                Math.sin(dLon / 2) *
+                Math.sin(dLon / 2);
+
+            const c =
+                2 *
+                Math.atan2(
+                    Math.sqrt(a),
+                    Math.sqrt(1 - a)
+                );
+
+            return R * c;
+        }
+
+
+        /* =========================================================
+           HTML ESCAPE
+        ========================================================= */
+
+        function escapeHtml(value) {
+
+            if (value === null ||
+                value === undefined) {
+                return "";
+            }
+
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+
+        /* =========================================================
+           SWITCH LOCATION MODE
+        ========================================================= */
+
+        window.switchLocationMode =
+            function(mode) {
+
+                currentMode = mode;
+
+                if (mode === 'manual') {
+
+                    tabManualBtn.classList.add('active');
+
+                    tabGpsBtn.classList.remove('active');
+
+                    manualLocationRow.style.display =
+                        "block";
+
+                    gpsLocationRow.style.display =
+                        "none";
+
+                    cachedUserLat = null;
+
+                    cachedUserLng = null;
+
+                    // renderKitchens();
+
+                }
+
+                else {
+
+                    tabGpsBtn.classList.add('active');
+
+                    tabManualBtn.classList.remove('active');
+
+                    manualLocationRow.style.display =
+                        "none";
+
+                    gpsLocationRow.style.display =
+                        "block";
+
+                    if (document.activeElement === tabGpsBtn) {
+                        cachedUserLat = null;
+                        cachedUserLng = null;
+                    }
+
+                    gpsStatus.style.display =
+                        "none";
+
+                    gpsButton.disabled = false;
+
+                    gpsButtonText.innerText =
+                        "Fetch My Exact GPS Coordinates";
+
+                }
+            };
+            
+        // Initial setup for the correct tab on load
+        if (currentMode === "gps") {
+            switchLocationMode("gps");
+            gpsButtonText.innerText = "GPS Location Detected ✓";
+        }
+
+
+        /* =========================================================
+           CITY CHANGE
+        ========================================================= */
+
+        window.handleCityDropdownChange =
+            function() {
+
+                const selectedCity =
+                    cityDropdown.value;
+
+                areaDropdown.innerHTML =
+                    '<option value="" disabled selected>' +
+                    '-- Select Area --' +
+                    '</option>';
+
+                if (!selectedCity) {
+
+                    areaDropdown.disabled = true;
+
+                    cachedUserLat = null;
+
+                    cachedUserLng = null;
+
+                    renderKitchens();
+
+                    return;
+                }
+
+                const cityAreas =
+                    locationsData.filter(
+                        x =>
+                            x.City &&
+                            x.City.toLowerCase() ===
+                            selectedCity.toLowerCase()
+                    );
+
+                const uniqueAreas = [];
+
+                const areaKeys = new Set();
+
+                cityAreas.forEach(location => {
+
+                    const areaName =
+                        location.Area || "";
+
+                    const key =
+                        areaName.toLowerCase();
+
+                    if (
+                        areaName &&
+                        !areaKeys.has(key)
+                    ) {
+
+                        areaKeys.add(key);
+
+                        uniqueAreas.push(location);
+                    }
+                });
+
+                uniqueAreas
+                    .sort((a, b) =>
+                        a.Area.localeCompare(b.Area)
+                    )
+                    .forEach(location => {
+
+                        const option =
+                            document.createElement('option');
+
+                        option.value =
+                            location.Area;
+
+                        option.textContent =
+                            location.Area;
+
+                        areaDropdown.appendChild(
+                            option
+                        );
+                    });
+
+                areaDropdown.disabled =
+                    uniqueAreas.length === 0;
+
+                cachedUserLat = null;
+
+                cachedUserLng = null;
+
+                renderKitchens();
+            };
+
+
+        /* =========================================================
+           AREA CHANGE
+        ========================================================= */
+
+        window.handleAreaDropdownChange =
+            function() {
+
+                const selectedCity =
+                    cityDropdown.value;
+
+                const selectedArea =
+                    areaDropdown.value;
+
+                if (
+                    !selectedCity ||
+                    !selectedArea
+                ) {
+
+                    cachedUserLat = null;
+
+                    cachedUserLng = null;
+
+                    renderKitchens();
+
+                    return;
+                }
+
+                const matchingLocations =
+                    locationsData.filter(
+                        x =>
+                            x.City &&
+                            x.Area &&
+                            x.City.toLowerCase() ===
+                            selectedCity.toLowerCase() &&
+                            x.Area.toLowerCase() ===
+                            selectedArea.toLowerCase()
+                    );
+
+                if (
+                    matchingLocations.length === 0
+                ) {
+
+                    cachedUserLat = null;
+
+                    cachedUserLng = null;
+
+                    renderKitchens();
+
+                    return;
+                }
+
+                /*
+                    Area coordinates are calculated from
+                    actual DB kitchen coordinates.
+                */
+
+                let totalLat = 0;
+
+                let totalLng = 0;
+
+                matchingLocations.forEach(location => {
+
+                    totalLat += Number(location.Lat);
+
+                    totalLng += Number(location.Lng);
+
+                });
+
+                cachedUserLat =
+                    totalLat /
+                    matchingLocations.length;
+
+                cachedUserLng =
+                    totalLng /
+                    matchingLocations.length;
+
+                executeCombinedSearchPipeline(true);
+            };
+
+
+        /* =========================================================
+           SEARCH
+        ========================================================= */
+
+        window.executeCombinedSearchPipeline =
+            function(scrollToResults = false) {
+
+                const params =
+                    new URLSearchParams();
+
+                const search =
+                    searchInput.value.trim();
+
+                if (search) {
+
+                    params.set(
+                        "searchQuery",
+                        search
+                    );
+                }
+
+                if (
+                    cachedUserLat !== null &&
+                    cachedUserLng !== null
+                ) {
+
+                    params.set(
+                        "latitude",
+                        cachedUserLat
+                    );
+
+                    params.set(
+                        "longitude",
+                        cachedUserLng
+                    );
+                }
+
+                const selectedCategory =
+                    searchInput.dataset.category || "";
+
+                if (selectedCategory) {
+
+                    params.set(
+                        "category",
+                        selectedCategory
+                    );
+                }
+
+                const url =
+                    "/Customer/Index" +
+                    (
+                        params.toString()
+                            ? "?" + params.toString()
+                            : ""
+                    );
+
+                window.location.href =
+                    url;
+            };
+
+
+        /* =========================================================
+           CATEGORY FILTER
+        ========================================================= */
+
+        window.filterByCategory =
+            function(categoryName) {
+
+                searchInput.value =
+                    categoryName;
+
+                searchInput.dataset.category =
+                    categoryName;
+
+                executeCombinedSearchPipeline(true);
+            };
+
+
+        /* =========================================================
+           RENDER KITCHENS
+        ========================================================= */
+
+        function renderKitchens() {
+
+            if (!kitchensGrid)
+                return;
+
+            kitchensGrid.innerHTML = "";
+
+            let processedKitchens =
+                kitchensData
+                    ? [...kitchensData]
+                    : [];
+
+
+            /* =====================================================
+               SORTING
+            ===================================================== */
+
+            if (
+                sortFilterDropdown.value ===
+                "rating"
+            ) {
+
+                processedKitchens.sort(
+                    (a, b) =>
+                        Number(b.rating) -
+                        Number(a.rating)
+                );
+            }
+
+
+            let matchesFound = false;
+
+
+            processedKitchens.forEach(
+                kitchen => {
+
+                    const kId = kitchen.Id || kitchen.id;
+                    const isFavorite = favoriteKitchenIds.has(Number(kId));
+
+                    const kName = kitchen.Name || kitchen.name;
+                    const kitchenName = escapeHtml(kName);
+
+                    const kImage = kitchen.Image || kitchen.image;
+                    const kitchenImage = escapeHtml(kImage || '/images/14.JPG');
+
+                    const kTime = (kitchen.Time || kitchen.time || "").trim();
+                    const kRating = kitchen.Rating || kitchen.rating || 0;
+                    const rating = Number(kRating).toFixed(1);
+
+                    const kTags = kitchen.Tags || kitchen.tags;
+                    const tags = Array.isArray(kTags) ? kTags : [];
+
+                    const kArea = kitchen.Area || kitchen.area;
+                    const kitchenArea = escapeHtml(kArea || "");
+
+                    const kCity = kitchen.City || kitchen.city;
+                    const kitchenCity = escapeHtml(kCity || "");
+
+                    const isOpen = kitchen.IsOpen !== undefined ? Boolean(kitchen.IsOpen) : (kitchen.isOpen !== undefined ? Boolean(kitchen.isOpen) : true);
+                    const openingTime = (kitchen.OpeningTime || kitchen.openingTime || "").trim();
+                    const closingTime = (kitchen.ClosingTime || kitchen.closingTime || "").trim();
+                    const currentDate = kitchen.CurrentDate || kitchen.currentDate || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const kRate = Number(kitchen.DeliveryRatePerKm || kitchen.deliveryRatePerKm) || 30;
+
+                    // Format Operational Status & Hours
+                    let isCurrentlyOpen = isOpen;
+                    let operatingHoursText = "Hours unavailable";
+
+                    if (openingTime && closingTime) {
+                        operatingHoursText = `${escapeHtml(openingTime)} - ${escapeHtml(closingTime)}`;
+                    } else if (openingTime) {
+                        operatingHoursText = `Opens ${escapeHtml(openingTime)}`;
+                    } else if (isOpen) {
+                        operatingHoursText = "Open Today";
+                    }
+
+                    const statusBadgeHtml = isCurrentlyOpen
+                        ? `<span class="delivery-badge open"><span class="badge-dot"></span> Open</span>`
+                        : `<span class="delivery-badge closed"><i class="fas fa-moon"></i> Closed</span>`;
+
+                    // Format Distance & Dynamic Delivery Time
+                    let distanceText = `<span class="distance-chip set-loc" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); switchLocationMode('gps');" title="Click to set your location for exact distance"><i class="fas fa-crosshairs"></i> Set Location</span>`;
+                    let hasCalculatedDistance = false;
+                    let calculatedTime = "";
+
+                    if (cachedUserLat !== null && cachedUserLng !== null) {
+                        const kLat = kitchen.Lat || kitchen.lat;
+                        const kLng = kitchen.Lng || kitchen.lng;
+                        if (kLat && kLng) {
+                            const distance = getDistanceKM(cachedUserLat, cachedUserLng, Number(kLat), Number(kLng));
+                            distanceText = `<span class="distance-chip"><i class="fas fa-location-arrow"></i> ${distance.toFixed(1)} km</span>`;
+                            hasCalculatedDistance = true;
+
+                            // Calculate dynamic delivery duration: 15 min base + 5 min per km
+                            let estimatedTravel = Math.ceil(distance * 5);
+                            let minTime = 15 + estimatedTravel;
+                            let maxTime = minTime + 10;
+                            calculatedTime = `${minTime}-${maxTime} mins`;
+                        }
+                    }
+
+                    // Format Delivery/Preparation Time dynamically
+                    let displayDeliveryTime = "";
+                    if (hasCalculatedDistance && calculatedTime) {
+                        displayDeliveryTime = calculatedTime;
+                    } else if (kTime && kTime.toLowerCase() !== "set location") {
+                        displayDeliveryTime = escapeHtml(kTime);
+                        if (!displayDeliveryTime.toLowerCase().includes("min")) {
+                            displayDeliveryTime += " mins";
+                        }
+                    } else {
+                        // Dynamic fallback: 25-40 mins standard delivery
+                        displayDeliveryTime = "25-40 mins";
+                    }
+
+                    matchesFound = true;
+
+                    const cardCol = document.createElement('div');
+                    cardCol.className = 'kitchen-col';
+
+                    const safeTags = tags.length > 0
+                        ? tags.slice(0, 3).map(tag => `<span>${escapeHtml(tag)}</span>`).join("")
+                        : `<span>Fresh Meals</span>`;
+
+                    cardCol.innerHTML = `
+                        <div class="food-card">
+                            <div class="card-image">
+                                <img
+                                    src="${kitchenImage}"
+                                    alt="${kitchenName}"
+                                    onerror="this.src='/images/14.JPG'"
+                                >
+                                ${statusBadgeHtml}
+                                <span class="rating-badge">
+                                    <i class="fas fa-star text-warning"></i> ${rating}
+                                </span>
+                                <button
+                                    type="button"
+                                    class="fav-btn ${isFavorite ? 'active' : ''}"
+                                    data-kitchen-id="${Number(kId)}"
+                                    onclick="toggleFavorite(${Number(kId)}, this)"
+                                    title="Add to Favorites"
+                                >
+                                    <i class="${isFavorite ? 'fas fa-heart text-danger' : 'far fa-heart'}"></i>
+                                </button>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="kitchen-title-row">
+                                    <h4 class="kitchen-name" title="${kitchenName}">
+                                        ${kitchenName}
+                                    </h4>
+                                    ${distanceText}
+                                </div>
+
+                                <p class="kitchen-location text-muted" title="${kitchenArea ? kitchenArea + ', ' : ''}${kitchenCity}">
+                                    <i class="fas fa-map-marker-alt"></i> ${kitchenArea ? kitchenArea + ', ' : ''}${kitchenCity || 'Location on map'}
+                                </p>
+
+                                <div class="kitchen-meta-row">
+                                    <span class="meta-item" title="Estimated Delivery Time">
+                                        <i class="far fa-clock"></i> ${displayDeliveryTime}
+                                    </span>
+                                    <span class="meta-item" title="Delivery Rate">
+                                        <i class="fas fa-bicycle"></i> Rs. ${kRate}/km
+                                    </span>
+                                    <span class="meta-item" title="Operating Hours">
+                                        <i class="far fa-calendar-alt"></i> ${operatingHoursText}
+                                    </span>
+                                </div>
+
+                                <div class="kitchen-tags-row">
+                                    ${safeTags}
+                                </div>
+
+                                <div class="card-footer-action">
+                                    <a
+                                        href="/Customer/KitchenMenu/${Number(kId)}"
+                                        class="view-btn"
+                                    >
+                                        <i class="fas fa-utensils"></i>
+                                        View Menu
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    kitchensGrid.appendChild(
+                        cardCol
+                    );
+                }
+            );
+
+
+            /* =====================================================
+               NO RESULTS
+            ===================================================== */
+
+            if (!matchesFound) {
+
+                kitchensGrid.innerHTML = `
+
+                    <div
+                        class="no-results-box"
+                        style="grid-column:1/-1;"
+                    >
+
+                        <i class="fas fa-utensils"></i>
+
+                        <h3>
+                            No Kitchens Found!
+                        </h3>
+
+                        <p>
+                            Chunay gaye location,
+                            search ya category ke mutabiq
+                            koi cloud kitchen nahi mila.
+                        </p>
+
+                    </div>
+
+                `;
+            }
+        }
+
+
+        /* =========================================================
+           TOGGLE FAVORITE - DATABASE
+        ========================================================= */
+
+        window.toggleFavorite =
+            async function(kitchenId, button) {
+
+                if (!kitchenId || !button)
+                    return;
+
+                button.disabled = true;
+
+                try {
+
+                    const formData =
+                        new FormData();
+
+                    formData.append(
+                        "kitchenId",
+                        kitchenId
+                    );
+
+                    if (antiForgeryToken) {
+
+                        formData.append(
+                            "__RequestVerificationToken",
+                            antiForgeryToken
+                        );
+                    }
+
+                    const response =
+                        await fetch(
+                            "/Customer/ToggleFavorite",
+                            {
+                                method: "POST",
+                                body: formData,
+                                credentials: "same-origin"
+                            }
+                        );
+
+
+                    if (
+                        response.status ===
+                        401
+                    ) {
+
+                        window.location.href =
+                            "/Account/Login";
+
+                        return;
+                    }
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            "Favorite request failed."
+                        );
+                    }
+
+
+                    const result =
+                        await response.json();
+
+
+                    const icon = button.querySelector('i');
+
+                    if (
+                        result.success &&
+                        result.isFavorite
+                    ) {
+
+                        favoriteKitchenIds.add(
+                            Number(kitchenId)
+                        );
+
+                        button.classList.add(
+                            "active"
+                        );
+
+                        if (icon) {
+                            icon.classList.remove('far');
+                            icon.classList.add('fas', 'text-danger');
+                        }
+
+                    }
+
+                    else if (
+                        result.success &&
+                        !result.isFavorite
+                    ) {
+
+                        favoriteKitchenIds.delete(
+                            Number(kitchenId)
+                        );
+
+                        button.classList.remove(
+                            "active"
+                        );
+
+                        if (icon) {
+                            icon.classList.remove('fas', 'text-danger');
+                            icon.classList.add('far');
+                        }
+                    }
+
+                }
+
+                catch (error) {
+
+                    console.error(
+                        "Favorite error:",
+                        error
+                    );
+
+                    alert(
+                        "Unable to update favorite right now. Please try again."
+                    );
+
+                }
+
+                finally {
+
+                    button.disabled = false;
+                }
+            };
+
+
+        /* =========================================================
+           LOAD DATABASE FAVORITES
+        ========================================================= */
+
+        async function loadCustomerFavorites() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/Customer/GetFavoriteKitchenIds",
+                        {
+                            method: "GET",
+                            credentials: "same-origin"
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    /*
+                        Guest users simply have
+                        no loaded favorites.
+                    */
+
+                    return;
+                }
+
+
+                const ids =
+                    await response.json();
+
+
+                if (Array.isArray(ids)) {
+
+                    favoriteKitchenIds =
+                        new Set(
+                            ids.map(id =>
+                                Number(id)
+                            )
+                        );
+                }
+
+
+                renderKitchens();
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Favorite loading error:",
+                    error
+                );
+            }
+        }
+
+
+        /* =========================================================
+           GPS LOCATION
+        ========================================================= */
+
+        window.initSearchLocationService =
+            function(autoRequest = false) {
+
+                if (!navigator.geolocation) {
+
+                    showGPSStatus(
+                        "GPS is not supported by this browser.",
+                        true
+                    );
+
+                    return;
+                }
+
+
+                gpsButton.disabled = true;
+
+                gpsButtonText.innerText =
+                    "Detecting your location...";
+
+
+                showGPSStatus(
+                    "Please allow location access from your browser.",
+                    false
+                );
+
+
+                const geoOptions = {
+
+                    enableHighAccuracy: true,
+
+                    timeout: 15000,
+
+                    maximumAge: 0
+                };
+
+
+                navigator.geolocation.getCurrentPosition(
+
+                    function(position) {
+
+                        cachedUserLat =
+                            position.coords.latitude;
+
+                        cachedUserLng =
+                            position.coords.longitude;
+
+
+                        gpsButton.disabled =
+                            false;
+
+
+                        gpsButtonText.innerText =
+                            "GPS Location Detected ✓";
+
+
+                        showGPSStatus(
+                            "Your current location has been detected. Showing kitchens within 5 KM.",
+                            false
+                        );
+
+
+                        /*
+                            Send coordinates to server.
+
+                            The server performs the actual
+                            5 KM filtering.
+                        */
+
+                        executeCombinedSearchPipeline(
+                            true
+                        );
+                    },
+
+
+                    function(error) {
+
+                        cachedUserLat =
+                            null;
+
+                        cachedUserLng =
+                            null;
+
+
+                        gpsButton.disabled =
+                            false;
+
+
+                        gpsButtonText.innerText =
+                            "Try GPS Location Again";
+
+
+                        let message =
+                            "Unable to detect your location.";
+
+
+                        if (
+                            error.code ===
+                            error.PERMISSION_DENIED
+                        ) {
+
+                            message =
+                                "Location permission was denied. Please allow GPS permission in browser settings.";
+                        }
+
+                        else if (
+                            error.code ===
+                            error.TIMEOUT
+                        ) {
+
+                            message =
+                                "GPS request timed out. Please try again.";
+                        }
+
+
+                        showGPSStatus(
+                            message,
+                            true
+                        );
+                    },
+
+                    geoOptions
+                );
+            };
+
+
+        /* =========================================================
+           GPS STATUS
+        ========================================================= */
+
+        function showGPSStatus(
+            message,
+            isError
+        ) {
+
+            gpsStatus.style.display =
+                "block";
+
+            gpsStatus.innerHTML =
+                `<i class="fas ${
+                    isError
+                        ? 'fa-exclamation-circle'
+                        : 'fa-check-circle'
+                } me-2"></i>${escapeHtml(message)}`;
+        }
+
+
+        /* =========================================================
+           ENTER KEY SEARCH
+        ========================================================= */
+
+        searchInput.addEventListener(
+            'keyup',
+            function(e) {
+
+                if (
+                    e.key === 'Enter'
+                ) {
+
+                    executeCombinedSearchPipeline(
+                        true
+                    );
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           INITIAL PAGE LOAD
+        ========================================================= */
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            function() {
+
+                loadCustomerFavorites();
+
+                renderKitchens();
+
+            }
+        );
+
+    </script>
+
+}

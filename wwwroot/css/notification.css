@@ -1,0 +1,154 @@
+﻿:root {
+    --soft-orange: #FFB347;
+    --beige: #F5E6CA;
+    --dark-brown: #5D4037;
+    --white: #FFF;
+    --card-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    --radius: 12px;
+    --muted: #6b6b6b
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins',sans-serif
+}
+
+body {
+    display: flex;
+    background: var(--beige);
+    min-height: 100vh;
+    color: #222
+}
+
+.main-content {
+    flex: 1;
+    padding: 100px 28px 32px 28px;
+    position: relative
+}
+
+.profile-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px
+}
+
+    .profile-box img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover
+    }
+
+    .profile-box .meta {
+        display: flex;
+        flex-direction: column
+    }
+
+        .profile-box .meta .name {
+            font-weight: 700;
+            color: var(--dark-brown)
+        }
+
+.controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 14px
+}
+
+.input, .select {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e3d6bf;
+    background: var(--white)
+}
+
+.card {
+    background: var(--white);
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow)
+}
+
+.list {
+    margin-top: 12px
+}
+
+.note {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    margin-bottom: 10px
+}
+
+    .note.unread {
+        background: linear-gradient(90deg,#fffdf2,#fff3cd)
+    }
+
+    .note .time {
+        color: var(--muted);
+        font-size: 0.9rem
+    }
+
+    .note .text {
+        flex: 1
+    }
+
+    .note .actions {
+        display: flex;
+        gap: 8px
+    }
+
+.btn {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700
+}
+
+.btn-mark {
+    background: var(--soft-orange);
+    color: var(--dark-brown)
+}
+
+.btn-del {
+    background: #e74c3c;
+    color: #fff
+}
+
+.top-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px
+}
+
+.badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--dark-brown);
+    font-weight: 700
+}
+
+@media(max-width:900px) {
+    .sidebar {
+        display: none
+    }
+
+    .main-content {
+        padding: 110px 12px
+    }
+}

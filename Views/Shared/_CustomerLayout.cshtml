@@ -1,0 +1,2508 @@
+@using CloudKitchen.Data
+@inject CloudKitchenDbContext DbContext
+@{
+    var userEmail = User.Identity?.Name;
+    string profilePicUrl = null;
+    string customerInitial = "U";
+    string userLang = Context.Request.Cookies["app_language"] ?? "English";
+    if (!string.IsNullOrEmpty(userEmail))
+    {
+        var customer = DbContext.Customers.FirstOrDefault(c => c.Email == userEmail);
+        profilePicUrl = customer?.ProfilePictureUrl;
+        if (customer != null)
+        {
+            if (!string.IsNullOrWhiteSpace(customer.Name))
+            {
+                var cTrim = customer.Name.Trim();
+                var cSplit = cTrim.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                customerInitial = cSplit.Length > 1 
+                    ? $"{cSplit[0][0]}{cSplit[cSplit.Length - 1][0]}".ToUpper() 
+                    : (cSplit.Length > 0 && cSplit[0].Length > 0 ? cSplit[0].Substring(0, 1).ToUpper() : "U");
+            }
+            var cSettings = DbContext.CustomerSettings.FirstOrDefault(s => s.CustomerId == customer.Id);
+            if (cSettings != null && !string.IsNullOrEmpty(cSettings.Language))
+            {
+                userLang = cSettings.Language;
+            }
+        }
+    }
+}
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <script>
+        window.currentUserEmail = '@(User.Identity?.Name ?? "guest")';
+    </script>
+
+    <title>@ViewData["Title"] - Cloud Kitchen</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <!-- Multi-Language Google Translate Style Cleanup -->
+    <style>
+        .goog-te-banner-frame.skiptranslate,
+        .goog-te-banner-frame {
+            display: none !important;
+        }
+        body {
+            top: 0px !important;
+        }
+        .goog-tooltip, .goog-tooltip:hover {
+            display: none !important;
+        }
+        .goog-text-highlight {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        #goog-gt-tt, .goog-te-balloon-frame {
+            display: none !important;
+        }
+        .skiptranslate:not(.goog-te-gadget) {
+            display: none !important;
+        }
+        #google_translate_element {
+            display: none !important;
+        }
+    </style>
+
+    <style>
+
+        :root {
+            --soft-orange: #FFB347;
+            --beige: #F5E6CA;
+            --light-beige: #F8EEDC;
+            --dark-brown: #5D4037;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #f7f7f7;
+            overflow-x: hidden;
+        }
+
+        /* =========================
+                       TOPBAR
+                ========================== */
+
+        .customer-topbar {
+            width: 100%;
+            height: 75px;
+            background: var(--soft-orange);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 5000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        }
+
+        .customer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .customer-logo {
+            height: 50px;
+            width: 50px;
+            object-fit: contain;
+            background: transparent !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+
+        .customer-brand-name {
+            color: var(--dark-brown);
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .customer-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .customer-action {
+            width: 45px;
+            height: 45px;
+            border: none;
+            background: transparent;
+            color: var(--dark-brown);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            font-size: 19px;
+        }
+
+            .customer-action:hover {
+                background: rgba(255,255,255,0.35);
+            }
+
+        .customer-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* =========================
+                       OVERLAY
+                ========================== */
+
+        .customer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 6000;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s ease;
+        }
+
+            .customer-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        /* =========================
+                       DRAWER
+                ========================== */
+
+        .customer-drawer {
+            position: fixed;
+            top: 0;
+            right: -450px;
+            width: 420px;
+            max-width: 100%;
+            height: 100vh;
+            background: white;
+            z-index: 7000;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.35s ease;
+            box-shadow: -10px 0 35px rgba(0,0,0,0.2);
+        }
+
+            .customer-drawer.active {
+                right: 0;
+            }
+
+        .customer-drawer-header {
+            height: 75px;
+            padding: 0 20px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .customer-drawer-title {
+            margin: 0;
+            color: var(--dark-brown);
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .customer-close {
+            width: 38px;
+            height: 38px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 50%;
+            font-size: 22px;
+            cursor: pointer;
+            color: var(--dark-brown);
+        }
+
+            .customer-close:hover {
+                background: var(--beige);
+            }
+
+        .customer-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        /* =========================
+               CART DRAWER STYLES
+        ========================== */
+
+        .cart-disclaimer {
+            padding: 10px 20px 14px;
+            font-size: 0.85rem;
+            color: #777;
+            margin: 0;
+            line-height: 1.4;
+            border-bottom: 1px solid #f4ede6;
+        }
+
+        .cart-kitchen-card {
+            background: #fffcf8;
+            border: 1px solid #fae8d8;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 15px rgba(61, 35, 20, 0.03);
+        }
+
+        .cart-kitchen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .cart-kitchen-title-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #3e2723;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+
+        .cart-kitchen-title-box i {
+            color: #f5a623;
+            font-size: 0.95rem;
+        }
+
+        .cart-kitchen-count {
+            font-size: 0.82rem;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .btn-clear-kitchen {
+            background: none;
+            border: none;
+            color: #e53935;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.2s;
+        }
+
+        .btn-clear-kitchen:hover {
+            color: #b71c1c;
+            text-decoration: underline;
+        }
+
+        .cart-item-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .cart-item-thumbnail {
+            width: 52px;
+            height: 52px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #f5f5f5;
+        }
+
+        .cart-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cart-item-title {
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: #222;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0;
+        }
+
+        .cart-item-price-tag {
+            color: #c85a17;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-top: 2px;
+        }
+
+        .cart-item-stepper {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+            background: #f8f8f8;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 2px 6px;
+        }
+
+        .cart-qty-btn {
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #555;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .cart-qty-btn:hover {
+            color: #000;
+        }
+
+        .cart-qty-val {
+            font-weight: 700;
+            font-size: 0.85rem;
+            min-width: 14px;
+            text-align: center;
+            color: #333;
+        }
+
+        .cart-item-trash {
+            background: none;
+            border: none;
+            color: #bbb;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 6px;
+            transition: color 0.2s;
+        }
+
+        .cart-item-trash:hover {
+            color: #e53935;
+        }
+
+        .cart-pricing-box {
+            border-top: 1px dashed #e8ded4;
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.88rem;
+            color: #666;
+        }
+
+        .cart-pricing-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .cart-pricing-row.total-row {
+            font-weight: 800;
+            font-size: 1rem;
+            color: #222;
+            margin-top: 4px;
+        }
+
+        .btn-kitchen-checkout {
+            width: 100%;
+            background: #3e2723;
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-weight: 700;
+            font-size: 0.94rem;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-kitchen-checkout:hover {
+            background: #2b1b18;
+            color: #ffffff;
+        }
+
+        .empty-cart {
+            text-align: center;
+            color: #999;
+            padding: 60px 10px;
+        }
+
+            .empty-cart i {
+                font-size: 45px;
+                color: #ddd;
+                margin-bottom: 15px;
+            }
+
+        /* =========================
+                       MENU DRAWER
+                ========================== */
+
+        .customer-menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            .customer-menu-list li {
+                margin-bottom: 8px;
+            }
+
+            .customer-menu-list a {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 13px;
+                color: var(--dark-brown);
+                text-decoration: none;
+                border-radius: 10px;
+                font-weight: 600;
+            }
+
+                .customer-menu-list a:hover {
+                    background: var(--light-beige);
+                }
+
+        /* =========================
+                       NOTIFICATION DRAWER
+                ========================== */
+
+        .customer-notification-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 14px;
+            transition: 0.2s ease;
+        }
+
+            .customer-notification-item:hover {
+                background: var(--light-beige);
+                border-color: var(--soft-orange);
+            }
+
+            .customer-notification-item.order-status {
+                cursor: pointer;
+            }
+
+            .customer-notification-item.unread {
+                background: #fffaf1;
+                border-left: 4px solid var(--soft-orange);
+            }
+
+        .notification-icon-box {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            border-radius: 12px;
+            background: var(--light-beige);
+            color: var(--dark-brown);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            margin: 0;
+            color: var(--dark-brown);
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .notification-message {
+            margin: 3px 0;
+            color: #666;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .notification-time {
+            color: #aaa;
+            font-size: 10px;
+        }
+
+        .notification-arrow {
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .normal-notification {
+            cursor: pointer;
+        }
+
+        .notification-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+
+        .mark-all-btn {
+            border: none;
+            background: transparent;
+            color: var(--dark-brown);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+            .mark-all-btn:hover {
+                text-decoration: underline;
+            }
+
+        /* =========================
+                       MOBILE
+                ========================== */
+
+        @@media (max-width: 600px) {
+
+            .customer-brand-name {
+                font-size: 17px;
+            }
+
+            .customer-logo {
+                width: 50px;
+                height: 50px;
+                background: transparent !important;
+            }
+
+            .customer-topbar {
+                padding: 0 10px;
+            }
+
+            .customer-drawer {
+                width: 100%;
+            }
+        }
+
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+
+<body>
+
+    <!-- =========================
+         OVERLAY
+    ========================== -->
+
+    <div id="customerOverlay"
+         class="customer-overlay"></div>
+
+
+    <!-- =========================
+         TOPBAR
+    ========================== -->
+
+    <header class="customer-topbar">
+        <div class="container d-flex justify-content-between align-items-center w-100">
+        <a asp-controller="Customer"
+           asp-action="Index"
+           class="customer-brand">
+
+            <img src="/images/logo.png"
+                 class="customer-logo"
+                 alt="Cloud Kitchen">
+
+            <span class="customer-brand-name">
+                Cloud Kitchen
+            </span>
+
+        </a>
+
+
+        <div class="customer-actions">
+
+            <!-- Notification -->
+
+            <button type="button"
+                    id="customerNotificationBtn"
+                    class="customer-action">
+
+                <i class="fas fa-bell"></i>
+
+                <span id="customerNotificationBadge"
+                      class="customer-badge">
+                    0
+                </span>
+
+            </button>
+
+
+            <!-- Cart -->
+
+            <button type="button"
+                    id="customerCartBtn"
+                    class="customer-action">
+
+                <i class="fas fa-shopping-cart"></i>
+
+                <span id="customerCartBadge"
+                      class="customer-badge">
+                    0
+                </span>
+
+            </button>
+
+
+            <!-- Menu -->
+
+            <button type="button"
+                    id="customerMenuBtn"
+                    class="customer-action">
+
+                <i class="fas fa-bars"></i>
+
+            </button>
+
+        </div>
+        </div>
+    </header>
+
+
+    <!-- =========================
+         MENU DRAWER
+    ========================== -->
+
+    <aside id="customerMenuDrawer"
+           class="customer-drawer">
+
+        <div class="customer-drawer-header">
+
+            <h3 class="customer-drawer-title">
+                Menu
+            </h3>
+
+            <button type="button"
+                    id="customerMenuClose"
+                    class="customer-close">
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="customer-drawer-body">
+
+            <ul class="customer-menu-list">
+
+                <li>
+                    <a asp-controller="Home"
+                       asp-action="Index">
+
+                        <i class="fas fa-home"></i>
+                        Home
+
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-controller="Customer"
+                       asp-action="OrderHistory">
+
+                        <i class="fas fa-history"></i>
+                        Order History
+
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-controller="Customer"
+                       asp-action="Favorite">
+
+                        <i class="fas fa-heart"></i>
+                        Favorite Kitchens
+
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-controller="Customer"
+                       asp-action="Settings">
+
+                        <i class="fas fa-cog"></i>
+                        Settings
+
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-controller="Customer"
+                       asp-action="Profile">
+
+                        @if (!string.IsNullOrEmpty(profilePicUrl) && !profilePicUrl.Contains("profile.png"))
+                        {
+                            <img src="@Url.Content("~/" + profilePicUrl.TrimStart('/'))" style="width:24px; height:24px; border-radius:50%; object-fit:cover; margin-right:6px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" alt="" />
+                            <span class="avatar-letter-circle avatar-letter-sm" style="display:none; margin-right:6px;">@customerInitial</span>
+                        }
+                        else
+                        {
+                            <span class="avatar-letter-circle avatar-letter-sm" style="margin-right:6px;">@customerInitial</span>
+                        }
+                        Profile
+
+                    </a>
+                </li>
+
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post" id="customerLogoutForm" style="display: none;">
+                        @Html.AntiForgeryToken()
+                    </form>
+                    <a href="javascript:void(0);" onclick="handleCustomerLogout();">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                </li>
+
+            </ul>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================
+         NOTIFICATION DRAWER
+    ========================== -->
+
+    <aside id="customerNotificationDrawer"
+           class="customer-drawer">
+
+        <div class="customer-drawer-header">
+
+            <h3 class="customer-drawer-title">
+                <i class="fas fa-bell"></i>
+                Notifications
+            </h3>
+
+            <button type="button"
+                    id="customerNotificationClose"
+                    class="customer-close">
+                ×
+            </button>
+
+        </div>
+
+
+        <div id="customerNotificationBody"
+             class="customer-drawer-body">
+
+            <div class="empty-cart">
+
+                <i class="fas fa-bell"></i>
+
+                <p>Loading notifications...</p>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================
+         CART DRAWER
+    ========================== -->
+
+    <aside id="customerCartDrawer"
+           class="customer-drawer">
+
+        <div class="customer-drawer-header">
+
+            <h3 class="customer-drawer-title">
+                Your Cart
+            </h3>
+
+            <button type="button"
+                    id="customerCartClose"
+                    class="customer-close">
+                ×
+            </button>
+
+        </div>
+
+        <p class="cart-disclaimer" id="customerCartDisclaimer" style="display: none; padding: 0 24px 8px; font-size: 0.82rem; color: #777; margin: 0; line-height: 1.4;">
+            Each kitchen delivers separately — check out one kitchen at a time.
+        </p>
+
+        <div id="customerCartBody"
+             class="customer-drawer-body">
+        </div>
+
+        <div class="cart-footer" id="customerCartFooter" style="display: none;">
+
+            <div class="cart-total">
+
+                <span>Total</span>
+
+                <span id="customerCartTotal">
+                    Rs. 0
+                </span>
+
+            </div>
+
+            <button type="button"
+                    id="customerCheckoutBtn"
+                    class="checkout-main-btn">
+
+                <i class="fas fa-shopping-bag me-2"></i>
+
+                Proceed to Checkout
+
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================
+         PAGE CONTENT
+    ========================== -->
+
+    <main>
+
+        @RenderBody()
+
+    </main>
+
+
+    <!-- =========================
+         ANTI FORGERY TOKEN
+    ========================== -->
+
+    <form id="notificationAntiForgeryForm"
+          style="display:none;">
+
+        @Html.AntiForgeryToken()
+
+    </form>
+
+
+    <!-- =========================
+         BOOTSTRAP
+    ========================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <!-- =========================
+         CUSTOMER CART + NOTIFICATION ENGINE
+    ========================== -->
+
+    <script>
+
+        (function () {
+
+            "use strict";
+
+
+            /* =========================
+               ELEMENTS
+            ========================== */
+
+            const cartBtn =
+                document.getElementById(
+                    "customerCartBtn"
+                );
+
+            const cartDrawer =
+                document.getElementById(
+                    "customerCartDrawer"
+                );
+
+            const cartClose =
+                document.getElementById(
+                    "customerCartClose"
+                );
+
+            const cartBody =
+                document.getElementById(
+                    "customerCartBody"
+                );
+
+            const cartBadge =
+                document.getElementById(
+                    "customerCartBadge"
+                );
+
+            const cartTotal =
+                document.getElementById(
+                    "customerCartTotal"
+                );
+
+            const checkoutBtn =
+                document.getElementById(
+                    "customerCheckoutBtn"
+                );
+
+
+            const menuBtn =
+                document.getElementById(
+                    "customerMenuBtn"
+                );
+
+            const menuDrawer =
+                document.getElementById(
+                    "customerMenuDrawer"
+                );
+
+            const menuClose =
+                document.getElementById(
+                    "customerMenuClose"
+                );
+
+
+            const notificationBtn =
+                document.getElementById(
+                    "customerNotificationBtn"
+                );
+
+            const notificationDrawer =
+                document.getElementById(
+                    "customerNotificationDrawer"
+                );
+
+            const notificationClose =
+                document.getElementById(
+                    "customerNotificationClose"
+                );
+
+            const notificationBody =
+                document.getElementById(
+                    "customerNotificationBody"
+                );
+
+            const notificationBadge =
+                document.getElementById(
+                    "customerNotificationBadge"
+                );
+
+
+            const overlay =
+                document.getElementById(
+                    "customerOverlay"
+                );
+
+
+            /* =========================
+               CART STORAGE (USER-SCOPED)
+            ========================== */
+
+            window.getCartStorageKey = function () {
+                const email = (window.currentUserEmail && window.currentUserEmail !== "guest")
+                    ? window.currentUserEmail.trim().toLowerCase()
+                    : "guest";
+                return "kitchenCarts_" + encodeURIComponent(email);
+            };
+
+            window.handleCustomerLogout = function () {
+                try {
+                    const key = window.getCartStorageKey();
+                    localStorage.removeItem(key);
+                    localStorage.removeItem("kitchenCarts");
+                    localStorage.removeItem("selectedCheckoutKitchen");
+                    sessionStorage.clear();
+                } catch (e) {}
+                const form = document.getElementById("customerLogoutForm");
+                if (form) form.submit();
+            };
+
+            function getCart() {
+                try {
+                    const storageKey = window.getCartStorageKey();
+                    if (localStorage.getItem("kitchenCarts")) {
+                        localStorage.removeItem("kitchenCarts"); // Clean legacy shared key
+                    }
+
+                    const data = localStorage.getItem(storageKey);
+                    if (!data) {
+                        return {};
+                    }
+
+                    const parsed = JSON.parse(data);
+                    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+                        return {};
+                    }
+
+                    return parsed;
+                }
+                catch (error) {
+                    console.error("Cart read error:", error);
+                    return {};
+                }
+            }
+
+            function saveCart(cart) {
+                try {
+                    const storageKey = window.getCartStorageKey();
+                    localStorage.setItem(storageKey, JSON.stringify(cart));
+                    localStorage.removeItem("kitchenCarts"); // Ensure legacy key doesn't linger
+                }
+                catch (error) {
+                    console.error("Cart save error:", error);
+                }
+            }
+
+
+            /* =========================
+               CLOSE ALL DRAWERS
+            ========================== */
+
+            function closeAllDrawers() {
+
+                cartDrawer.classList.remove(
+                    "active"
+                );
+
+                menuDrawer.classList.remove(
+                    "active"
+                );
+
+                notificationDrawer.classList.remove(
+                    "active"
+                );
+
+                overlay.classList.remove(
+                    "active"
+                );
+
+            }
+
+
+            /* =========================
+               OPEN CART
+            ========================== */
+
+            function openCart() {
+
+                closeAllDrawers();
+
+                cartDrawer.classList.add(
+                    "active"
+                );
+
+                overlay.classList.add(
+                    "active"
+                );
+
+                refreshCartLayoutView();
+
+            }
+
+
+            /* =========================
+               OPEN MENU
+            ========================== */
+
+            function openMenu() {
+
+                closeAllDrawers();
+
+                menuDrawer.classList.add(
+                    "active"
+                );
+
+                overlay.classList.add(
+                    "active"
+                );
+
+            }
+
+
+            /* =========================
+               OPEN NOTIFICATIONS
+            ========================== */
+
+            function openNotifications() {
+
+                closeAllDrawers();
+
+                notificationDrawer.classList.add(
+                    "active"
+                );
+
+                overlay.classList.add(
+                    "active"
+                );
+
+                loadCustomerNotifications();
+
+            }
+
+
+            /* =========================
+               ORDER STATUS
+            ========================== */
+
+            window.openOrderStatus =
+                function (orderId) {
+
+                    if (!orderId) {
+                        return;
+                    }
+
+                    window.location.href =
+                        "/Customer/OrderStatus?id=" +
+                        encodeURIComponent(
+                            orderId
+                        );
+
+                };
+
+
+            /* =========================
+               CART RENDER
+            ========================== */
+
+            window.refreshCartLayoutView = function () {
+                const cart = getCart();
+                const disclaimerEl = document.getElementById("customerCartDisclaimer");
+                const footerEl = document.getElementById("customerCartFooter") || document.querySelector(".cart-footer");
+
+                if (footerEl) {
+                    footerEl.style.display = "none";
+                }
+
+                cartBody.innerHTML = "";
+
+                let grandTotalQty = 0;
+                const kitchenNames = Object.keys(cart).filter(k => Array.isArray(cart[k]) && cart[k].length > 0);
+
+                if (kitchenNames.length === 0) {
+                    if (disclaimerEl) disclaimerEl.style.display = "none";
+                    if (cartBadge) cartBadge.style.display = "none";
+                    if (cartTotal) cartTotal.innerText = "Rs. 0";
+
+                    cartBody.innerHTML = `
+                        <div class="empty-cart" style="text-align: center; padding: 60px 20px;">
+                            <i class="fa-solid fa-basket-shopping" style="font-size: 3.2rem; color: #e5ded6; margin-bottom: 16px; display: block;"></i>
+                            <p style="font-size: 1.15rem; font-weight: 800; color: #444; margin-bottom: 6px;">Your cart is empty</p>
+                            <small style="color: #888; font-size: 0.88rem;">Add items from kitchens to start ordering</small>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (disclaimerEl) {
+                    disclaimerEl.style.display = "block";
+                }
+
+                kitchenNames.forEach(function (kitchenName) {
+                    const items = cart[kitchenName];
+                    const kitchenItemCount = items.reduce((sum, item) => sum + (Number(item.qty) || 1), 0);
+                    const kitchenSubtotal = items.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qty) || 1)), 0);
+                    
+                    // Dynamic delivery fee per kilometer
+                    const ratePerKm = Number(items[0]?.deliveryRatePerKm) || 30;
+                    const kLat = Number(items[0]?.kitchenLat) || 0;
+                    const kLng = Number(items[0]?.kitchenLng) || 0;
+                    const userLat = parseFloat(localStorage.getItem("userLat") || sessionStorage.getItem("userLat") || "0");
+                    const userLng = parseFloat(localStorage.getItem("userLng") || sessionStorage.getItem("userLng") || "0");
+
+                    let distanceKm = 3.2; // default intra-city distance fallback
+                    if (userLat !== 0 && userLng !== 0 && kLat !== 0 && kLng !== 0) {
+                        const R = 6371;
+                        const dLat = (kLat - userLat) * Math.PI / 180;
+                        const dLon = (kLng - userLng) * Math.PI / 180;
+                        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                                  Math.cos(userLat * Math.PI / 180) * Math.cos(kLat * Math.PI / 180) *
+                                  Math.sin(dLon/2) * Math.sin(dLon/2);
+                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                        const d = R * c;
+                        if (d > 0 && d < 100) {
+                            distanceKm = Math.round(d * 10) / 10;
+                        }
+                    }
+
+                    const deliveryFee = Math.max(40, Math.round(distanceKm * ratePerKm));
+                    const kitchenTotal = kitchenSubtotal + deliveryFee;
+                    const firstKitchenId = items[0]?.kitchenId || 0;
+
+                    grandTotalQty += kitchenItemCount;
+
+                    const card = document.createElement("div");
+                    card.className = "cart-kitchen-card";
+
+                    let itemsHtml = items.map(function (item, index) {
+                        const qty = Math.min(Math.max(Number(item.qty) || 1, 1), 100);
+                        const price = Number(item.price) || 0;
+                        const itemTotal = price * qty;
+                        const imgSrc = item.img || item.image || "/images/default-food.jpg";
+
+                        return `
+                            <div class="cart-item-row">
+                                <img class="cart-item-thumbnail" src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name || '')}" onerror="this.src='/images/default-food.jpg';">
+                                <div class="cart-item-info">
+                                    <p class="cart-item-title">${escapeHtml(item.name || '')}</p>
+                                    <div class="cart-item-price-tag">Rs. ${itemTotal}</div>
+                                    <div class="cart-item-stepper">
+                                        <button type="button" class="cart-qty-btn" data-action="minus" data-kitchen="${encodeURIComponent(kitchenName)}" data-index="${index}">−</button>
+                                        <span class="cart-qty-val">${qty}</span>
+                                        <button type="button" class="cart-qty-btn" data-action="plus" data-kitchen="${encodeURIComponent(kitchenName)}" data-index="${index}">+</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="cart-item-trash" data-action="delete" data-kitchen="${encodeURIComponent(kitchenName)}" data-index="${index}" title="Remove item">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </div>
+                        `;
+                    }).join("");
+
+                    card.innerHTML = `
+                        <!-- Kitchen Header -->
+                        <div class="cart-kitchen-header">
+                            <div>
+                                <div class="cart-kitchen-title-box">
+                                    <i class="fa-solid fa-utensils"></i>
+                                    <span>${escapeHtml(kitchenName)}</span>
+                                </div>
+                                <div class="cart-kitchen-count">
+                                    ${kitchenItemCount} ${kitchenItemCount === 1 ? 'item' : 'items'}
+                                </div>
+                            </div>
+                            <button type="button" class="btn-clear-kitchen" data-action="clear-kitchen" data-kitchen="${encodeURIComponent(kitchenName)}">
+                                Clear
+                            </button>
+                        </div>
+
+                        <!-- Items List -->
+                        <div style="display: flex; flex-direction: column;">
+                            ${itemsHtml}
+                        </div>
+
+                        <!-- Pricing Breakdown -->
+                        <div class="cart-pricing-box">
+                            <div class="cart-pricing-row">
+                                <span>Subtotal</span>
+                                <span>Rs. ${kitchenSubtotal}</span>
+                            </div>
+                            <div class="cart-pricing-row">
+                                <span>Delivery (${distanceKm.toFixed(1)} km @@ Rs. ${ratePerKm}/km)</span>
+                                <span>Rs. ${deliveryFee}</span>
+                            </div>
+                            <div class="cart-pricing-row total-row">
+                                <span>Total</span>
+                                <span>Rs. ${kitchenTotal}</span>
+                            </div>
+                        </div>
+
+                        <!-- Checkout Button -->
+                        <button type="button" class="btn-kitchen-checkout" data-action="checkout-kitchen" data-kitchen="${encodeURIComponent(kitchenName)}" data-kitchen-id="${firstKitchenId}">
+                            <i class="fa-solid fa-lock"></i>
+                            <span>Checkout from ${escapeHtml(kitchenName)}</span>
+                        </button>
+                    `;
+
+                    cartBody.appendChild(card);
+                });
+
+                if (cartBadge) {
+                    cartBadge.innerText = grandTotalQty;
+                    cartBadge.style.display = grandTotalQty > 0 ? "flex" : "none";
+                }
+            };
+
+
+            /* =========================================================
+               CART BODY ACTIONS: QUANTITY, DELETE, CLEAR, CHECKOUT
+            ========================================================= */
+
+            cartBody.addEventListener("click", function (event) {
+                const targetBtn = event.target.closest("[data-action]");
+                if (!targetBtn) return;
+
+                const action = targetBtn.dataset.action;
+                const kitchen = decodeURIComponent(targetBtn.dataset.kitchen || "");
+                const index = Number(targetBtn.dataset.index);
+                const cart = getCart();
+
+                if (!cart[kitchen] || !Array.isArray(cart[kitchen])) return;
+
+                if (action === "plus") {
+                    const currentQty = Number(cart[kitchen][index]?.qty) || 1;
+                    cart[kitchen][index].qty = Math.min(currentQty + 1, 100);
+                    cart[kitchen][index].quantity = cart[kitchen][index].qty;
+                    saveCart(cart);
+                    refreshCartLayoutView();
+                } else if (action === "minus") {
+                    const currentQty = Number(cart[kitchen][index]?.qty) || 1;
+                    if (currentQty > 1) {
+                        cart[kitchen][index].qty = currentQty - 1;
+                        cart[kitchen][index].quantity = cart[kitchen][index].qty;
+                    } else {
+                        cart[kitchen].splice(index, 1);
+                        if (cart[kitchen].length === 0) delete cart[kitchen];
+                    }
+                    saveCart(cart);
+                    refreshCartLayoutView();
+                } else if (action === "delete") {
+                    cart[kitchen].splice(index, 1);
+                    if (cart[kitchen].length === 0) delete cart[kitchen];
+                    saveCart(cart);
+                    refreshCartLayoutView();
+                } else if (action === "clear-kitchen") {
+                    if (confirm(`Remove all items from ${kitchen}?`)) {
+                        delete cart[kitchen];
+                        saveCart(cart);
+                        refreshCartLayoutView();
+                    }
+                } else if (action === "checkout-kitchen") {
+                    const kitchenId = targetBtn.dataset.kitchenId || cart[kitchen][0]?.kitchenId || "";
+                    localStorage.setItem("selectedCheckoutKitchen", kitchen);
+                    sessionStorage.setItem("selectedCheckoutKitchen", kitchen);
+                    window.location.href = `/Customer/Checkout?kitchen=${encodeURIComponent(kitchen)}&kitchenId=${encodeURIComponent(kitchenId)}`;
+                }
+            });
+
+
+            /* =========================
+               ADD ITEM FROM KITCHEN MENU
+            ========================== */
+
+            window.addKitchenItemToCart =
+                function (
+                    kitchenName,
+                    kitchenId,
+                    itemId,
+                    itemName,
+                    itemPrice,
+                    itemImage
+                ) {
+
+                    const cart =
+                        getCart();
+
+
+                    const parsedKitchenId =
+                        Number(
+                            kitchenId
+                        );
+
+                    const parsedItemId =
+                        Number(
+                            itemId
+                        );
+
+
+                    const price =
+                        Number(
+                            itemPrice
+                        ) || 0;
+
+
+                    /* -------------------------
+                       VALIDATION
+                    -------------------------- */
+
+                    if (
+                        !kitchenName ||
+                        parsedKitchenId <= 0 ||
+                        parsedItemId <= 0
+                    ) {
+
+                        console.error(
+                            "Invalid kitchen or menu item information."
+                        );
+
+                        alert(
+                            "Unable to add this item to cart."
+                        );
+
+                        return;
+
+                    }
+
+
+                    /* -------------------------
+                       CREATE KITCHEN CART
+                    -------------------------- */
+
+                    if (
+                        !cart[kitchenName]
+                    ) {
+
+                        cart[kitchenName] = [];
+
+                    }
+
+
+                    /* -------------------------
+                       FIND EXISTING ITEM
+                    -------------------------- */
+
+                    const existing =
+                        cart[kitchenName].find(
+                            function (item) {
+
+                                return Number(
+                                    item.menuItemId
+                                ) ===
+                                parsedItemId;
+
+                            }
+                        );
+
+
+                    /* -------------------------
+                       INCREASE QUANTITY
+                    -------------------------- */
+
+                    if (existing) {
+
+                        existing.qty =
+                            Math.min(
+                                (
+                                    Number(
+                                        existing.qty
+                                    ) || 1
+                                ) + 1,
+                                100
+                            );
+
+                        existing.kitchenId =
+                            parsedKitchenId;
+
+                    }
+
+                    /* -------------------------
+                       ADD NEW ITEM
+                    -------------------------- */
+
+                    else {
+
+                        cart[kitchenName].push({
+
+                            kitchenId:
+                                parsedKitchenId,
+
+                            menuItemId:
+                                parsedItemId,
+
+                            /*
+                             * UI display values only.
+                             * Server recalculates the
+                             * actual price from DB.
+                             */
+
+                            name:
+                                String(
+                                    itemName || ""
+                                ),
+
+                            price:
+                                price,
+
+                            img:
+                                String(
+                                    itemImage || ""
+                                ),
+
+                            kitchen:
+                                String(
+                                    kitchenName
+                                ),
+
+                            qty:
+                                1
+
+                        });
+
+                    }
+
+
+                    saveCart(cart);
+
+                    refreshCartLayoutView();
+
+                    openCart();
+
+                };
+
+
+            /* =========================
+               ESCAPE HTML
+            ========================== */
+
+            function escapeHtml(value) {
+
+                return String(
+                    value ?? ""
+                )
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
+
+            }
+
+
+            /* =====================================================
+               NOTIFICATION FUNCTIONS
+            ===================================================== */
+
+
+            /* =========================
+               LOAD NOTIFICATIONS
+            ========================== */
+
+            async function loadCustomerNotifications() {
+                if (!window.currentUserEmail || window.currentUserEmail === "guest") {
+                    if (notificationBadge) notificationBadge.style.display = "none";
+                    if (notificationBody) {
+                        notificationBody.innerHTML = `
+                            <div class="empty-cart">
+                                <i class="fas fa-bell-slash"></i>
+                                <p>Please login to view your notifications.</p>
+                            </div>
+                        `;
+                    }
+                    return;
+                }
+
+                try {
+                    notificationBody.innerHTML = `
+                        <div class="empty-cart">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading notifications...</p>
+                        </div>
+                    `;
+
+                    const response = await fetch("/Customer/GetNotifications?_t=" + Date.now(), {
+                        method: "GET",
+                        cache: "no-store",
+                        credentials: "same-origin"
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Notification request failed.");
+                    }
+
+                    const notifications = await response.json();
+
+
+                    if (
+                        !Array.isArray(
+                            notifications
+                        ) ||
+                        notifications.length === 0
+                    ) {
+
+                        notificationBadge.style.display =
+                            "none";
+
+
+                        notificationBody.innerHTML = `
+
+                            <div class="empty-cart">
+
+                                <i class="fas fa-bell-slash"></i>
+
+                                <p>No notifications yet.</p>
+
+                            </div>
+
+                        `;
+
+                        return;
+
+                    }
+
+
+                    const unreadCount =
+                        notifications.filter(
+                            function (
+                                notification
+                            ) {
+
+                                return String(
+                                    notification.status
+                                )
+                                .toLowerCase() ===
+                                "unread";
+
+                            }
+                        ).length;
+
+
+                    updateNotificationBadge(
+                        unreadCount
+                    );
+
+
+                    let html = "";
+
+
+                    html += `
+
+                        <div class="notification-actions">
+
+                            <button
+                                type="button"
+                                class="mark-all-btn"
+                                onclick="markAllCustomerNotificationsAsRead()">
+
+                                Mark all as read
+
+                            </button>
+
+                        </div>
+
+                    `;
+
+
+                    notifications.forEach(
+                        function (
+                            notification
+                        ) {
+
+                            const isUnread =
+                                String(
+                                    notification.status
+                                )
+                                .toLowerCase() ===
+                                "unread";
+
+
+                            const title =
+                                escapeHtml(
+                                    notification.title
+                                );
+
+
+                            const body =
+                                escapeHtml(
+                                    notification.body
+                                );
+
+
+                            const time =
+                                formatNotificationTime(
+                                    notification.time
+                                );
+
+
+                            const icon =
+                                getNotificationIcon(
+                                    notification.title
+                                );
+
+
+                            const notificationId =
+                                encodeURIComponent(
+                                    notification.id
+                                );
+
+
+                            const hasLink =
+                                notification.link &&
+                                notification.link.trim() !==
+                                "";
+
+
+                            html += `
+
+                                <div
+                                    class="customer-notification-item
+                                           ${isUnread ? "unread" : ""}
+                                           ${hasLink ? "order-status" : "normal-notification"}"
+                                    data-notification-id="${notificationId}"
+                                    ${
+                                        hasLink
+                                            ? `onclick="handleCustomerNotificationClick('${notificationId}', '${encodeURIComponent(notification.link)}')"`
+                                            : `onclick="markCustomerNotificationAsRead('${notificationId}')"`
+                                    }>
+
+                                    <div class="notification-icon-box">
+
+                                        <i class="fas ${icon}"></i>
+
+                                    </div>
+
+
+                                    <div class="notification-content">
+
+                                        <p class="notification-title">
+
+                                            ${title}
+
+                                        </p>
+
+                                        <p class="notification-message">
+
+                                            ${body}
+
+                                        </p>
+
+                                        <span class="notification-time">
+
+                                            ${time}
+
+                                        </span>
+
+                                    </div>
+
+
+                                    ${
+                                        hasLink
+                                            ? `
+
+                                                <div class="notification-arrow">
+
+                                                    <i class="fas fa-chevron-right"></i>
+
+                                                </div>
+
+                                              `
+                                            : ""
+                                    }
+
+                                </div>
+
+                            `;
+
+                        }
+                    );
+
+
+                    notificationBody.innerHTML =
+                        html;
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Notification error:",
+                        error
+                    );
+
+
+                    notificationBadge.style.display =
+                        "none";
+
+
+                    notificationBody.innerHTML = `
+
+                        <div class="empty-cart">
+
+                            <i class="fas fa-exclamation-circle"></i>
+
+                            <p>
+                                Unable to load notifications.
+                            </p>
+
+                        </div>
+
+                    `;
+
+                }
+
+            }
+
+
+            /* =========================
+               NOTIFICATION BADGE
+            ========================== */
+
+            function updateNotificationBadge(
+                unreadCount
+            ) {
+
+                const count =
+                    Number(
+                        unreadCount
+                    ) || 0;
+
+
+                if (
+                    count <= 0
+                ) {
+
+                    notificationBadge.innerText =
+                        "0";
+
+                    notificationBadge.style.display =
+                        "none";
+
+                    return;
+
+                }
+
+
+                notificationBadge.innerText =
+                    count > 99
+                        ? "99+"
+                        : count;
+
+                notificationBadge.style.display =
+                    "flex";
+
+            }
+
+
+            /* =========================
+               LOAD BADGE ON PAGE LOAD
+            ========================== */
+
+            async function loadNotificationBadge() {
+                if (!window.currentUserEmail || window.currentUserEmail === "guest") {
+                    if (notificationBadge) notificationBadge.style.display = "none";
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/Customer/GetNotifications?_t=" + Date.now(), {
+                        method: "GET",
+                        cache: "no-store",
+                        credentials: "same-origin"
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const notifications = await response.json();
+
+
+                    if (
+                        !Array.isArray(
+                            notifications
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    const unreadCount =
+                        notifications.filter(
+                            function (
+                                notification
+                            ) {
+
+                                return String(
+                                    notification.status
+                                )
+                                .toLowerCase() ===
+                                "unread";
+
+                            }
+                        ).length;
+
+
+                    updateNotificationBadge(
+                        unreadCount
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Notification badge error:",
+                        error
+                    );
+
+                }
+
+            }
+
+
+            /* =========================
+               NOTIFICATION ICON
+            ========================== */
+
+            function getNotificationIcon(
+                title
+            ) {
+
+                const text =
+                    String(
+                        title || ""
+                    )
+                    .toLowerCase();
+
+
+                if (
+                    text.includes("cancel")
+                ) {
+
+                    return "fa-circle-xmark";
+
+                }
+
+
+                if (
+                    text.includes("accept")
+                ) {
+
+                    return "fa-circle-check";
+
+                }
+
+
+                if (
+                    text.includes("preparing")
+                ) {
+
+                    return "fa-fire-burner";
+
+                }
+
+
+                if (
+                    text.includes("ready")
+                ) {
+
+                    return "fa-bell";
+
+                }
+
+
+                if (
+                    text.includes("dispatch")
+                ) {
+
+                    return "fa-truck";
+
+                }
+
+
+                if (
+                    text.includes("order")
+                ) {
+
+                    return "fa-receipt";
+
+                }
+
+
+                if (
+                    text.includes("offer")
+                ) {
+
+                    return "fa-tag";
+
+                }
+
+
+                if (
+                    text.includes("kitchen")
+                ) {
+
+                    return "fa-store";
+
+                }
+
+
+                return "fa-bell";
+
+            }
+
+
+            /* =========================
+               FORMAT TIME
+            ========================== */
+
+            function formatNotificationTime(
+                dateValue
+            ) {
+
+                if (!dateValue) {
+
+                    return "";
+
+                }
+
+
+                const date =
+                    new Date(
+                        dateValue
+                    );
+
+
+                if (
+                    Number.isNaN(
+                        date.getTime()
+                    )
+                ) {
+
+                    return "";
+
+                }
+
+
+                const now =
+                    new Date();
+
+
+                const difference =
+                    Math.floor(
+                        (
+                            now.getTime() -
+                            date.getTime()
+                        ) / 1000
+                    );
+
+
+                if (
+                    difference < 60
+                ) {
+
+                    return "Just now";
+
+                }
+
+
+                const minutes =
+                    Math.floor(
+                        difference / 60
+                    );
+
+
+                if (
+                    minutes < 60
+                ) {
+
+                    return minutes +
+                        (
+                            minutes === 1
+                                ? " minute ago"
+                                : " minutes ago"
+                        );
+
+                }
+
+
+                const hours =
+                    Math.floor(
+                        minutes / 60
+                    );
+
+
+                if (
+                    hours < 24
+                ) {
+
+                    return hours +
+                        (
+                            hours === 1
+                                ? " hour ago"
+                                : " hours ago"
+                        );
+
+                }
+
+
+                const days =
+                    Math.floor(
+                        hours / 24
+                    );
+
+
+                if (
+                    days < 7
+                ) {
+
+                    return days +
+                        (
+                            days === 1
+                                ? " day ago"
+                                : " days ago"
+                        );
+
+                }
+
+
+                return date.toLocaleDateString();
+
+            }
+
+
+            /* =========================
+               MARK ONE AS READ
+            ========================== */
+
+            window.markCustomerNotificationAsRead =
+                async function (
+                    notificationId
+                ) {
+
+                    try {
+
+                        const tokenElement =
+                            document.querySelector(
+                                'input[name="__RequestVerificationToken"]'
+                            );
+
+
+                        const token =
+                            tokenElement
+                                ? tokenElement.value
+                                : "";
+
+
+                        const formData =
+                            new URLSearchParams();
+
+
+                        formData.append(
+                            "id",
+                            decodeURIComponent(
+                                notificationId
+                            )
+                        );
+
+
+                        if (token) {
+
+                            formData.append(
+                                "__RequestVerificationToken",
+                                token
+                            );
+
+                        }
+
+
+                        const response =
+                            await fetch(
+                                "/Customer/MarkAsRead",
+                                {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type":
+                                            "application/x-www-form-urlencoded; charset=UTF-8"
+                                    },
+                                    body:
+                                        formData.toString(),
+                                    credentials:
+                                        "same-origin"
+                                }
+                            );
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                "Unable to mark notification as read."
+                            );
+
+                        }
+
+
+                        await loadCustomerNotifications();
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            "Mark notification read error:",
+                            error
+                        );
+
+                    }
+
+                };
+
+
+            /* =========================
+               MARK ALL AS READ
+            ========================== */
+
+            window.markAllCustomerNotificationsAsRead =
+                async function () {
+
+                    try {
+
+                        const tokenElement =
+                            document.querySelector(
+                                'input[name="__RequestVerificationToken"]'
+                            );
+
+
+                        const token =
+                            tokenElement
+                                ? tokenElement.value
+                                : "";
+
+
+                        const formData =
+                            new URLSearchParams();
+
+
+                        if (token) {
+
+                            formData.append(
+                                "__RequestVerificationToken",
+                                token
+                            );
+
+                        }
+
+
+                        const response =
+                            await fetch(
+                                "/Customer/MarkAllNotificationsAsRead",
+                                {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type":
+                                            "application/x-www-form-urlencoded; charset=UTF-8"
+                                    },
+                                    body:
+                                        formData.toString(),
+                                    credentials:
+                                        "same-origin"
+                                }
+                            );
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                "Unable to mark all notifications."
+                            );
+
+                        }
+
+
+                        updateNotificationBadge(
+                            0
+                        );
+
+                        await loadCustomerNotifications();
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            "Mark all notifications error:",
+                            error
+                        );
+
+                    }
+
+                };
+
+
+            /* =========================
+               HANDLE NOTIFICATION CLICK
+            ========================== */
+
+            window.handleCustomerNotificationClick =
+                async function (
+                    notificationId,
+                    encodedLink
+                ) {
+
+                    try {
+
+                        await markCustomerNotificationAsRead(
+                            notificationId
+                        );
+
+
+                        const link =
+                            decodeURIComponent(
+                                encodedLink
+                            );
+
+
+                        if (link) {
+
+                            window.location.href =
+                                link;
+
+                        }
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            "Notification click error:",
+                            error
+                        );
+
+                    }
+
+                };
+
+
+            /* =========================
+               EVENTS
+            ========================== */
+
+            cartBtn.addEventListener(
+                "click",
+                openCart
+            );
+
+
+            cartClose.addEventListener(
+                "click",
+                closeAllDrawers
+            );
+
+
+            menuBtn.addEventListener(
+                "click",
+                openMenu
+            );
+
+
+            menuClose.addEventListener(
+                "click",
+                closeAllDrawers
+            );
+
+
+            notificationBtn.addEventListener(
+                "click",
+                openNotifications
+            );
+
+
+            notificationClose.addEventListener(
+                "click",
+                closeAllDrawers
+            );
+
+
+            overlay.addEventListener(
+                "click",
+                closeAllDrawers
+            );
+
+
+            /* =========================
+               FALLBACK CHECKOUT BUTTON
+            ========================== */
+
+            if (checkoutBtn) {
+                checkoutBtn.addEventListener("click", function () {
+                    const cart = getCart();
+                    const kitchenNames = Object.keys(cart).filter(k => Array.isArray(cart[k]) && cart[k].length > 0);
+                    if (kitchenNames.length === 0) {
+                        alert("Your cart is empty!");
+                        return;
+                    }
+                    const firstKitchen = kitchenNames[0];
+                    const firstKitchenId = cart[firstKitchen][0]?.kitchenId || "";
+                    localStorage.setItem("selectedCheckoutKitchen", firstKitchen);
+                    sessionStorage.setItem("selectedCheckoutKitchen", firstKitchen);
+                    window.location.href = `/Customer/Checkout?kitchen=${encodeURIComponent(firstKitchen)}&kitchenId=${encodeURIComponent(firstKitchenId)}`;
+                });
+            }
+
+
+            /* =========================
+               INITIALIZE
+            ========================== */
+
+            refreshCartLayoutView();
+
+            loadNotificationBadge();
+
+
+        })();
+
+    </script>
+
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Multi-Language Translation Loader -->
+    <div id="google_translate_element" style="display:none;"></div>
+    <script type="text/javascript">
+        (function() {
+            var savedLang = '@userLang';
+            var targetCode = savedLang === 'Urdu' ? '/en/ur' : (savedLang === 'Arabic' ? '/en/ar' : '/en/en');
+            var currentCookie = document.cookie.split('; ').find(function(row) { return row.startsWith('googtrans='); });
+            var currentVal = currentCookie ? currentCookie.split('=')[1] : '';
+            if (currentVal !== targetCode) {
+                document.cookie = "googtrans=" + targetCode + "; path=/;";
+                document.cookie = "googtrans=" + targetCode + "; path=/; domain=" + window.location.hostname + ";";
+            }
+        })();
+
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,ur,ar',
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+</html>

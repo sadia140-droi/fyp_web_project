@@ -1,0 +1,1729 @@
+@model Cloud_Kitchen_web_App.Models.OrderHistoryViewModel
+
+@{
+    ViewData["Title"] = "My Orders";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --soft-orange: #FFB347;
+            --soft-orange-2: #ffbf72;
+            --beige: #F8F5F0;
+            --white: #fff;
+            --dark-brown: #33221C;
+            --muted: #706461;
+            --card-shadow: 0 4px 16px rgba(92,64,55,0.06);
+            --radius: 12px;
+        }
+
+        .history-main-box {
+            max-width: 800px;
+            margin: 40px auto;
+        }
+
+        .header-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .back-circle-btn {
+            background: var(--white);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--dark-brown);
+            box-shadow: var(--card-shadow);
+            transition: 0.2s;
+        }
+
+            .back-circle-btn:hover {
+                background: var(--soft-orange);
+            }
+
+        .order-history-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .card-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        .kitchen-title-h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark-brown);
+            margin: 0;
+        }
+
+        .order-date-label {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+            /* Order Placed / Pending */
+            .status-badge.orderplaced,
+            .status-badge.pending {
+                background: #fff3cd;
+                color: #856404;
+            }
+
+            /* Accepted */
+            .status-badge.accepted,
+            .status-badge.orderaccepted {
+                background: #dbeafe;
+                color: #1e40af;
+            }
+
+            /* Preparing */
+            .status-badge.kitchenpreparing,
+            .status-badge.preparing {
+                background: #d1ecf1;
+                color: #0c5460;
+            }
+
+            /* Out for Delivery */
+            .status-badge.outfordelivery {
+                background: #e0e7ff;
+                color: #3730a3;
+            }
+
+            /* Delivered / Completed */
+            .status-badge.orderdelivered,
+            .status-badge.delivered,
+            .status-badge.completed {
+                background: #d4edda;
+                color: #155724;
+            }
+
+            /* Cancelled */
+            .status-badge.cancelled {
+                background: #f8d7da;
+                color: #721c24;
+            }
+
+            /* Unknown */
+            .status-badge.unknown {
+                background: #e9ecef;
+                color: #495057;
+            }
+
+        .items-summary-text {
+            font-size: 14px;
+            color: #555;
+            padding: 10px 0;
+            border-top: 1px dashed #eee;
+            border-bottom: 1px dashed #eee;
+            margin-bottom: 14px;
+            line-height: 1.6;
+        }
+
+        .card-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .amount-display {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--dark-brown);
+        }
+
+        .btn-action-chassis {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .btn-history-action {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .btn-history-action.reorder {
+                background: var(--soft-orange);
+                color: var(--dark-brown);
+            }
+
+                .btn-history-action.reorder:hover {
+                    background: var(--soft-orange-2);
+                }
+
+                .btn-history-action.reorder:disabled {
+                    opacity: 0.65;
+                    cursor: not-allowed;
+                }
+
+            .btn-history-action.review {
+                background: var(--white);
+                color: var(--dark-brown);
+                border: 1px solid #ddd;
+            }
+
+                .btn-history-action.review:hover {
+                    background: #f5f5f5;
+                }
+
+        .reviewed-stars {
+            color: #FFD700;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* =========================================================
+                           REVIEW MODAL
+                           ========================================================= */
+
+        .feedback-overlay-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s ease;
+            padding: 20px;
+        }
+
+            .feedback-overlay-modal.open {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        .modal-body-content {
+            background: var(--white);
+            padding: 24px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 440px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .stars-container-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .star-element-node {
+            font-size: 28px;
+            color: #ddd;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .star-element-node.active,
+            .star-element-node:hover {
+                color: #FFD700;
+            }
+
+        .submit-review-btn-mega {
+            background: var(--dark-brown);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            margin-top: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .submit-review-btn-mega:hover {
+                background: #463027;
+            }
+
+            .submit-review-btn-mega:disabled {
+                opacity: 0.65;
+                cursor: not-allowed;
+            }
+
+        .history-message {
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+            .history-message.show {
+                display: block;
+            }
+
+            .history-message.success {
+                background: #d4edda;
+                color: #155724;
+            }
+
+            .history-message.error {
+                background: #f8d7da;
+                color: #721c24;
+            }
+
+        /* =========================================================
+                           MOBILE
+                           ========================================================= */
+
+        @@media (max-width: 576px) {
+            .history-main-box {
+                margin: 25px auto;
+            }
+
+            .header-section {
+                gap: 10px;
+            }
+
+                .header-section h1 {
+                    font-size: 21px !important;
+                }
+
+            .order-history-card {
+                padding: 16px;
+            }
+
+            .card-top-row {
+                flex-direction: column;
+            }
+
+            .status-badge {
+                align-self: flex-start;
+            }
+
+            .card-bottom-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .btn-action-chassis {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .btn-history-action {
+                flex: 0 0 auto;
+            }
+        }
+    </style>
+}
+
+<div class="container">
+
+    <div class="history-main-box">
+
+        <!-- HEADER -->
+        <div class="header-section">
+
+            <button type="button"
+                    class="back-circle-btn"
+                    id="historyBackBtn"
+                    aria-label="Go back">
+
+                <i class="fas fa-arrow-left"></i>
+
+            </button>
+
+            <h1 style="
+                font-size:24px;
+                font-weight:800;
+                color:var(--dark-brown);
+                margin:0;
+            ">
+                My Orders History
+            </h1>
+
+        </div>
+
+
+        <!-- MESSAGE AREA -->
+        <div id="historyMessage"
+             class="history-message">
+        </div>
+
+
+        <!-- ORDERS -->
+        <div id="ordersRenderContainer">
+
+            @if (Model.PastOrders != null && Model.PastOrders.Any())
+            {
+                @foreach (var order in Model.PastOrders)
+                {
+                    var normalizedStatus =
+                    string.IsNullOrWhiteSpace(order.Status)
+                    ? "unknown"
+                    : order.Status
+                    .Trim()
+                    .ToLowerInvariant()
+                    .Replace(" ", "")
+                    .Replace("-", "");
+
+                    var canReview =
+                    order.Status.Equals(
+                    "Completed",
+                    StringComparison.OrdinalIgnoreCase)
+                    ||
+                    order.Status.Equals(
+                    "Delivered",
+                    StringComparison.OrdinalIgnoreCase)
+                    ||
+                    order.Status.Equals(
+                    "Order Delivered",
+                    StringComparison.OrdinalIgnoreCase);
+
+                    <div class="order-history-card"
+                         data-order-id="@order.Id">
+
+                        <!-- TOP -->
+                        <div class="card-top-row">
+
+                            <div>
+
+                                <h3 class="kitchen-title-h3">
+                                    @order.KitchenName
+                                </h3>
+
+                                <div class="order-date-label">
+                                    Order #@order.Id
+                                    •
+                                    @order.OrderDate.ToString(
+                                    "dd MMM yyyy, hh:mm tt")
+                        </div>
+
+                    </div>
+
+                    <span class="
+                                status-badge
+                                @normalizedStatus">
+
+                        @order.Status
+
+                    </span>
+
+                </div>
+
+
+                <!-- ITEMS -->
+                <div class="items-summary-text">
+
+                    @order.ItemsSummary
+
+                </div>
+
+
+                <!-- BOTTOM -->
+                <div class="card-bottom-row">
+
+                    <div class="amount-display">
+                        Rs. @order.TotalAmount.ToString("N2")
+                    </div>
+
+
+                    <div class="btn-action-chassis">
+
+                        <!-- REORDER -->
+                        <button type="button"
+                                class="btn-history-action reorder"
+                                data-order-id="@order.Id"
+                                onclick="triggerReorderProcess('@order.Id')">
+
+                            Reorder
+
+                        </button>
+
+
+                        <!-- REVIEW -->
+                        @if (canReview)
+                                {
+                                    @if (order.Rating.HasValue)
+                                    {
+                                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                                            <div class="reviewed-stars">
+
+                                                @for (int i = 1; i <= order.Rating.Value; i++)
+                                                {
+                                                    <i class="fas fa-star"></i>
+                                                }
+
+                                                <span class="text-muted small ms-1" style="font-weight:700;">
+                                                    @order.Rating.Value/5
+                                                </span>
+                                                <span class="badge bg-success ms-2" style="font-size: 10px; font-weight: bold; border-radius: 12px; padding: 4px 8px; vertical-align: middle;">
+                                                    Reviewed
+                                                </span>
+
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(order.Comment))
+                                            {
+                                                <div style="font-size: 13px; color: #666; margin-top: 6px; font-style: italic; max-width: 280px; text-align: right; background: #f9f9f9; padding: 6px 12px; border-radius: 8px; border: 1px solid #eee;">
+                                                    "@order.Comment"
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <button type="button"
+                                                class="btn-history-action review"
+                                                onclick="openFeedbackModalPopup('@order.Id')">
+
+                                            Leave Review
+
+                                        </button>
+                                    }
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="
+                            text-center
+                            py-5
+                            bg-white
+                            rounded-3
+                            box-shadow">
+
+                    <i class="fas fa-box-open mb-3 text-muted"
+                       style="font-size:48px;">
+                    </i>
+
+                    <p class="text-muted mb-0">
+                        Aapne abhi tak koi order place nahi kiya.
+                    </p>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     REVIEW MODAL
+     ============================================================= -->
+
+<div class="feedback-overlay-modal"
+     id="feedbackOverlayModalChassis">
+
+    <div class="modal-body-content">
+
+        <h3 style="
+            font-weight:800;
+            color:var(--dark-brown);
+        ">
+            Rate Your Experience
+        </h3>
+
+        <p class="text-muted small mt-1">
+            Apne kitchen owner ke khane aur service ki rating darj karein.
+        </p>
+
+
+        <!-- STARS -->
+        <div class="stars-container-row">
+
+            <i class="fas fa-star star-element-node"
+               data-value="1"
+               aria-label="1 star">
+            </i>
+
+            <i class="fas fa-star star-element-node"
+               data-value="2"
+               aria-label="2 stars">
+            </i>
+
+            <i class="fas fa-star star-element-node"
+               data-value="3"
+               aria-label="3 stars">
+            </i>
+
+            <i class="fas fa-star star-element-node"
+               data-value="4"
+               aria-label="4 stars">
+            </i>
+
+            <i class="fas fa-star star-element-node"
+               data-value="5"
+               aria-label="5 stars">
+            </i>
+
+        </div>
+
+
+        <!-- COMMENT -->
+        <textarea class="form-control"
+                  id="feedbackCommentArea"
+                  rows="3"
+                  maxlength="1000"
+                  placeholder="Write a comment about food quality, taste... (Optional)"
+                  style="
+                border-radius:8px;
+                font-size:14px;
+                resize:vertical;
+            ">
+        </textarea>
+
+
+        <!-- SUBMIT -->
+        <button type="button"
+                class="submit-review-btn-mega"
+                id="submitFeedbackBtn">
+
+            Submit Review
+
+        </button>
+
+
+        <!-- CANCEL -->
+        <button type="button"
+                class="
+                btn
+                btn-link
+                btn-sm
+                text-muted
+                mt-2
+                w-100
+                text-decoration-none"
+                id="closeFeedbackModalBtn">
+
+            Cancel
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     ANTI FORGERY TOKEN
+     ============================================================= -->
+
+<form id="orderHistoryAntiForgeryForm"
+      style="display:none;">
+
+    @Html.AntiForgeryToken()
+
+</form>
+
+
+@section Scripts {
+
+    <script>
+
+        /* =========================================================
+           GLOBAL REVIEW STATE
+           ========================================================= */
+
+        let currentActiveOrderId = null;
+
+        let selectedStarsCount = 0;
+
+
+        /* =========================================================
+           ELEMENTS
+           ========================================================= */
+
+        const modalChassis =
+            document.getElementById(
+                'feedbackOverlayModalChassis'
+            );
+
+        const modalStars =
+            document.querySelectorAll(
+                '.star-element-node'
+            );
+
+        const commentArea =
+            document.getElementById(
+                'feedbackCommentArea'
+            );
+
+        const submitFeedbackBtn =
+            document.getElementById(
+                'submitFeedbackBtn'
+            );
+
+        const closeFeedbackModalBtn =
+            document.getElementById(
+                'closeFeedbackModalBtn'
+            );
+
+        const historyMessage =
+            document.getElementById(
+                'historyMessage'
+            );
+
+
+        /* =========================================================
+           MESSAGE HELPER
+           ========================================================= */
+
+        function showHistoryMessage(
+            message,
+            type
+        ) {
+
+            if (!historyMessage) {
+                alert(message);
+                return;
+            }
+
+            historyMessage.textContent =
+                message;
+
+            historyMessage.className =
+                'history-message show ' +
+                (type || 'success');
+
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+
+        }
+
+
+        /* =========================================================
+           OPEN REVIEW MODAL
+           ========================================================= */
+
+        window.openFeedbackModalPopup =
+            function(orderId) {
+
+                if (!orderId) {
+                    alert(
+                        'Order information missing. Please refresh the page.'
+                    );
+
+                    return;
+                }
+
+                currentActiveOrderId =
+                    orderId;
+
+                selectedStarsCount =
+                    0;
+
+                if (commentArea) {
+                    commentArea.value = '';
+                }
+
+                updateStarsLayoutDisplay(0);
+
+                if (modalChassis) {
+                    modalChassis.classList.add(
+                        'open'
+                    );
+                }
+
+            };
+
+
+        /* =========================================================
+           CLOSE REVIEW MODAL
+           ========================================================= */
+
+        function closeFeedbackModal() {
+
+            if (modalChassis) {
+                modalChassis.classList.remove(
+                    'open'
+                );
+            }
+
+            currentActiveOrderId = null;
+
+            selectedStarsCount = 0;
+
+            updateStarsLayoutDisplay(0);
+
+        }
+
+
+        if (closeFeedbackModalBtn) {
+
+            closeFeedbackModalBtn.addEventListener(
+                'click',
+                closeFeedbackModal
+            );
+
+        }
+
+
+        /* =========================================================
+           CLOSE MODAL WHEN CLICKING OUTSIDE
+           ========================================================= */
+
+        if (modalChassis) {
+
+            modalChassis.addEventListener(
+                'click',
+                function(event) {
+
+                    if (
+                        event.target ===
+                        modalChassis
+                    ) {
+
+                        closeFeedbackModal();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* =========================================================
+           STAR SELECTION
+           ========================================================= */
+
+        modalStars.forEach(
+            function(star) {
+
+                star.addEventListener(
+                    'click',
+                    function() {
+
+                        selectedStarsCount =
+                            parseInt(
+                                star.dataset.value,
+                                10
+                            );
+
+                        updateStarsLayoutDisplay(
+                            selectedStarsCount
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+        /* =========================================================
+           STAR DISPLAY
+           ========================================================= */
+
+        function updateStarsLayoutDisplay(
+            rating
+        ) {
+
+            modalStars.forEach(
+                function(star) {
+
+                    const value =
+                        parseInt(
+                            star.dataset.value,
+                            10
+                        );
+
+                    if (value <= rating) {
+
+                        star.classList.add(
+                            'active'
+                        );
+
+                    }
+                    else {
+
+                        star.classList.remove(
+                            'active'
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* =========================================================
+           REAL REVIEW SUBMISSION
+           ========================================================= */
+
+        if (submitFeedbackBtn) {
+
+            submitFeedbackBtn.addEventListener(
+                'click',
+                async function() {
+
+                    if (
+                        selectedStarsCount < 1 ||
+                        selectedStarsCount > 5
+                    ) {
+
+                        alert(
+                            'Meherbani karke 1 se 5 stars select karein.'
+                        );
+
+                        return;
+                    }
+
+
+                    if (!currentActiveOrderId) {
+
+                        alert(
+                            'Order information missing. Please refresh the page.'
+                        );
+
+                        return;
+                    }
+
+
+                    const tokenInput =
+                        document.querySelector(
+                            '#orderHistoryAntiForgeryForm input[name="__RequestVerificationToken"]'
+                        );
+
+
+                    if (!tokenInput) {
+
+                        alert(
+                            'Security token missing. Please refresh the page.'
+                        );
+
+                        return;
+                    }
+
+
+                    const comment =
+                        commentArea
+                            ? commentArea.value.trim()
+                            : '';
+
+
+                    const formData =
+                        new URLSearchParams();
+
+
+                    formData.append(
+                        'orderId',
+                        currentActiveOrderId
+                    );
+
+                    formData.append(
+                        'rating',
+                        selectedStarsCount
+                    );
+
+                    formData.append(
+                        'comment',
+                        comment
+                    );
+
+                    formData.append(
+                        '__RequestVerificationToken',
+                        tokenInput.value
+                    );
+
+
+                    const originalButtonText =
+                        submitFeedbackBtn.textContent;
+
+
+                    submitFeedbackBtn.disabled =
+                        true;
+
+                    submitFeedbackBtn.textContent =
+                        'Submitting...';
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                '/Customer/SubmitReview',
+                                {
+                                    method: 'POST',
+
+                                    headers: {
+                                        'Content-Type':
+                                            'application/x-www-form-urlencoded; charset=UTF-8'
+                                    },
+
+                                    body:
+                                        formData.toString(),
+
+                                    credentials:
+                                        'same-origin'
+                                }
+                            );
+
+
+                        /*
+                         * CustomerController returns a redirect
+                         * to OrderHistory after successful review.
+                         */
+
+                        if (
+                            response.redirected
+                        ) {
+
+                            window.location.href =
+                                response.url;
+
+                            return;
+                        }
+
+
+                        const responseText =
+                            await response.text();
+
+
+                        if (!response.ok) {
+
+                            alert(
+                                responseText ||
+                                'Unable to submit your review.'
+                            );
+
+                            return;
+                        }
+
+
+                        /*
+                         * Successful response without
+                         * redirect — refresh the page.
+                         */
+
+                        window.location.reload();
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            'Review submission error:',
+                            error
+                        );
+
+                        alert(
+                            'Something went wrong while submitting your review. Please try again.'
+                        );
+
+                    }
+                    finally {
+
+                        submitFeedbackBtn.disabled =
+                            false;
+
+                        submitFeedbackBtn.textContent =
+                            originalButtonText;
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* =========================================================
+           REAL REORDER
+           ========================================================= */
+
+        window.triggerReorderProcess =
+            async function(orderId) {
+
+                if (!orderId) {
+
+                    alert(
+                        'Invalid order ID.'
+                    );
+
+                    return;
+                }
+
+
+                const clickedButton =
+                    document.querySelector(
+                        `.order-history-card[data-order-id="${CSS.escape(String(orderId))}"] .reorder`
+                    );
+
+
+                if (!clickedButton) {
+
+                    alert(
+                        'Reorder button not found. Please refresh the page.'
+                    );
+
+                    return;
+                }
+
+
+                const originalButtonText =
+                    clickedButton.textContent;
+
+
+                clickedButton.disabled = true;
+
+                clickedButton.textContent =
+                    'Checking...';
+
+
+                try {
+
+                    /* =====================================================
+                       GET SECURITY TOKEN
+                       ===================================================== */
+
+                    const tokenInput =
+                        document.querySelector(
+                            '#orderHistoryAntiForgeryForm input[name="__RequestVerificationToken"]'
+                        );
+
+
+                    if (!tokenInput) {
+
+                        alert(
+                            'Security token missing. Please refresh the page.'
+                        );
+
+                        return;
+                    }
+
+
+                    /* =====================================================
+                       SEND REORDER REQUEST
+                       Controller requires POST + AntiForgeryToken
+                       ===================================================== */
+
+                    const formData =
+                        new URLSearchParams();
+
+
+                    formData.append(
+                        'orderId',
+                        String(orderId)
+                    );
+
+
+                    formData.append(
+                        '__RequestVerificationToken',
+                        tokenInput.value
+                    );
+
+
+                    const response =
+                        await fetch(
+                            '/Customer/Reorder',
+                            {
+                                method: 'POST',
+
+                                headers: {
+                                    'Content-Type':
+                                        'application/x-www-form-urlencoded; charset=UTF-8'
+                                },
+
+                                body:
+                                    formData.toString(),
+
+                                credentials:
+                                    'same-origin'
+                            }
+                        );
+
+
+                    /* =====================================================
+                       RESPONSE CHECK
+                       ===================================================== */
+
+                    if (!response.ok) {
+
+                        const errorText =
+                            await response.text();
+
+                        alert(
+                            errorText ||
+                            'Unable to reorder this order.'
+                        );
+
+                        return;
+                    }
+
+
+                    const result =
+                        await response.json();
+
+
+                    if (
+                        !result ||
+                        result.success !== true
+                    ) {
+
+                        alert(
+                            result?.message ||
+                            'Unable to reorder this order.'
+                        );
+
+                        return;
+                    }
+
+
+                    /* =====================================================
+                       CONTROLLER RESPONSE
+
+                       {
+                           success: true,
+                           kitchenId: ...,
+                           kitchenName: ...,
+                           items: [
+                               {
+                                   id: ...,
+                                   name: ...,
+                                   price: ...,
+                                   img: ...,
+                                   qty: ...
+                               }
+                           ],
+                           unavailableItems: [...]
+                       }
+                    ===================================================== */
+
+                    const kitchenId =
+                        Number(result.kitchenId);
+
+
+                    const kitchenName =
+                        String(
+                            result.kitchenName || ''
+                        ).trim();
+
+
+                    const items =
+                        Array.isArray(result.items)
+                            ? result.items
+                            : [];
+
+
+                    if (
+                        !kitchenId ||
+                        !kitchenName
+                    ) {
+
+                        alert(
+                            'Kitchen information missing. Please try again.'
+                        );
+
+                        return;
+                    }
+
+
+                    if (!items.length) {
+
+                        alert(
+                            'Is order mein koi available item nahi mila.'
+                        );
+
+                        return;
+                    }
+
+
+                    /* =====================================================
+                       READ EXISTING CART
+
+                       IMPORTANT:
+                       _CustomerLayout uses kitchen NAME as the cart key.
+                    ===================================================== */
+
+                    let kitchenCarts = {};
+
+
+                    try {
+                        const storageKey = (typeof window.getCartStorageKey === "function")
+                            ? window.getCartStorageKey()
+                            : ("kitchenCarts_" + encodeURIComponent((window.currentUserEmail || "guest").trim().toLowerCase()));
+
+                        if (localStorage.getItem("kitchenCarts")) {
+                            localStorage.removeItem("kitchenCarts");
+                        }
+
+                        const savedCart =
+                            localStorage.getItem(
+                                storageKey
+                            );
+
+
+                        if (savedCart) {
+
+                            const parsed =
+                                JSON.parse(
+                                    savedCart
+                                );
+
+
+                            if (
+                                parsed &&
+                                typeof parsed === 'object' &&
+                                !Array.isArray(parsed)
+                            ) {
+
+                                kitchenCarts = parsed;
+
+                            }
+
+                        }
+
+                    }
+                    catch (storageError) {
+
+                        console.error(
+                            'Cart storage read error:',
+                            storageError
+                        );
+
+                        kitchenCarts = {};
+
+                    }
+
+
+                    /* =====================================================
+                       KITCHEN NAME IS THE REAL CART KEY
+                    ===================================================== */
+
+                    const kitchenKey =
+                        kitchenName;
+
+
+                    if (
+                        !Array.isArray(
+                            kitchenCarts[kitchenKey]
+                        )
+                    ) {
+
+                        kitchenCarts[kitchenKey] = [];
+
+                    }
+
+
+                    const activeKitchenCart =
+                        kitchenCarts[kitchenKey];
+
+
+                    /* =====================================================
+                       ADD CURRENT DATABASE ITEMS
+
+                       Controller already verifies:
+                       - item belongs to kitchen
+                       - item exists
+                       - item is available
+                       - current DB price
+                    ===================================================== */
+
+                    items.forEach(
+                        function(item) {
+
+                            if (!item) {
+                                return;
+                            }
+
+
+                            /*
+                             * CustomerController returns "id",
+                             * not "menuItemId".
+                             */
+
+                            const menuItemId =
+                                Number(item.id);
+
+
+                            /*
+                             * Controller returns "qty".
+                             */
+
+                            const quantity =
+                                Number(item.qty);
+
+
+                            /*
+                             * Controller returns current
+                             * database price.
+                             */
+
+                            const price =
+                                Number(item.price);
+
+
+                            if (
+                                !menuItemId ||
+                                menuItemId <= 0
+                            ) {
+
+                                return;
+                            }
+
+
+                            if (
+                                !Number.isFinite(quantity) ||
+                                quantity < 1
+                            ) {
+
+                                return;
+                            }
+
+
+                            const safeQuantity =
+                                Math.min(
+                                    100,
+                                    Math.floor(quantity)
+                                );
+
+
+                            if (
+                                !Number.isFinite(price) ||
+                                price < 0
+                            ) {
+
+                                return;
+                            }
+
+
+                            /* =================================================
+                               CHECK IF ITEM ALREADY EXISTS
+                            ================================================= */
+
+                            const existingItem =
+                                activeKitchenCart.find(
+                                    function(cartItem) {
+
+                                        return Number(
+                                            cartItem.menuItemId ??
+                                            cartItem.id
+                                        ) === menuItemId;
+
+                                    }
+                                );
+
+
+                            if (existingItem) {
+
+                                const existingQty =
+                                    Number(
+                                        existingItem.qty
+                                    ) || 0;
+
+
+                                existingItem.qty =
+                                    Math.min(
+                                        100,
+                                        existingQty +
+                                        safeQuantity
+                                    );
+
+
+                                /*
+                                 * IMPORTANT:
+                                 * Keep the same cart structure used
+                                 * by _CustomerLayout and Checkout.
+                                 */
+
+                                existingItem.kitchenId =
+                                    kitchenId;
+
+
+                                existingItem.menuItemId =
+                                    menuItemId;
+
+
+                                existingItem.name =
+                                    String(
+                                        item.name || ''
+                                    );
+
+
+                                existingItem.price =
+                                    price;
+
+
+                                existingItem.img =
+                                    String(
+                                        item.img || ''
+                                    );
+
+
+                                existingItem.kitchen =
+                                    kitchenName;
+
+                            }
+                            else {
+
+                                /*
+                                 * IMPORTANT:
+                                 * These exact fields are required by
+                                 * _CustomerLayout checkout flow.
+                                 */
+
+                                activeKitchenCart.push({
+
+                                    kitchenId:
+                                        kitchenId,
+
+                                    menuItemId:
+                                        menuItemId,
+
+                                    name:
+                                        String(
+                                            item.name || ''
+                                        ),
+
+                                    price:
+                                        price,
+
+                                    img:
+                                        String(
+                                            item.img || ''
+                                        ),
+
+                                    kitchen:
+                                        kitchenName,
+
+                                    qty:
+                                        safeQuantity
+
+                                });
+
+                            }
+
+                        }
+                    );
+
+
+                    /* =====================================================
+                       SAVE CART
+                    ===================================================== */
+
+                    kitchenCarts[kitchenKey] =
+                        activeKitchenCart;
+
+
+                    try {
+                        const storageKey = (typeof window.getCartStorageKey === "function")
+                            ? window.getCartStorageKey()
+                            : ("kitchenCarts_" + encodeURIComponent((window.currentUserEmail || "guest").trim().toLowerCase()));
+
+                        localStorage.setItem(
+                            storageKey,
+                            JSON.stringify(
+                                kitchenCarts
+                            )
+                        );
+                        localStorage.removeItem("kitchenCarts");
+
+                    }
+                    catch (storageError) {
+
+                        console.error(
+                            'Cart storage write error:',
+                            storageError
+                        );
+
+                        alert(
+                            'Cart save nahi ho saka. Please browser storage allow karein.'
+                        );
+
+                        return;
+                    }
+
+
+                    /* =====================================================
+                       REFRESH CUSTOMER LAYOUT CART
+                    ===================================================== */
+
+                    if (
+                        typeof window
+                            .refreshCartLayoutView ===
+                        'function'
+                    ) {
+
+                        window.refreshCartLayoutView();
+
+                    }
+
+
+                    /*
+                     * Current _CustomerLayout keeps openCart()
+                     * private inside its own scope.
+                     *
+                     * Therefore we do NOT assume it is globally
+                     * available.
+                     *
+                     * The cart data is already saved and the
+                     * layout has been refreshed.
+                     */
+
+
+                    /* =====================================================
+                       UNAVAILABLE ITEMS
+                    ===================================================== */
+
+                    const unavailableItems =
+                        Array.isArray(
+                            result.unavailableItems
+                        )
+                            ? result.unavailableItems
+                            : [];
+
+
+                    if (
+                        unavailableItems.length > 0
+                    ) {
+
+                        alert(
+                            `Reorder complete.\n\n` +
+                            `${unavailableItems.length} item(s) ab available nahi hain, is liye cart mein add nahi kiye gaye.`
+                        );
+
+                    }
+                    else {
+
+                        showHistoryMessage(
+                            `Order #${orderId} ke available items cart mein add ho gaye hain.`,
+                            'success'
+                        );
+
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Reorder error:',
+                        error
+                    );
+
+
+                    alert(
+                        'Something went wrong while reordering. Please try again.'
+                    );
+
+                }
+                finally {
+
+                    clickedButton.disabled =
+                        false;
+
+
+                    clickedButton.textContent =
+                        originalButtonText;
+
+                }
+
+            };
+
+
+        /* =========================================================
+           BACK BUTTON
+           ========================================================= */
+
+        const historyBackBtn =
+            document.getElementById(
+                'historyBackBtn'
+            );
+
+
+        if (historyBackBtn) {
+
+            historyBackBtn.addEventListener(
+                'click',
+                function() {
+
+                    if (
+                        window.history.length >
+                        1
+                    ) {
+
+                        window.history.back();
+
+                    }
+                    else {
+
+                        window.location.href =
+                            '/Customer/Index';
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* =========================================================
+           ESCAPE KEY — CLOSE REVIEW MODAL
+           ========================================================= */
+
+        document.addEventListener(
+            'keydown',
+            function(event) {
+
+                if (
+                    event.key === 'Escape' &&
+                    modalChassis &&
+                    modalChassis.classList.contains(
+                        'open'
+                    )
+                ) {
+
+                    closeFeedbackModal();
+
+                }
+
+            }
+        );
+
+    </script>
+}

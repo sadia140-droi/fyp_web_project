@@ -1,0 +1,276 @@
+@model Cloud_Kitchen_web_App.Models.ApplicationUser
+
+@{
+    ViewData["Title"] = "Edit User";
+    Layout = "~/Views/Shared/Admin.cshtml";
+}
+
+<style>
+    .heading {
+        margin-bottom: 25px;
+    }
+
+    .heading h1 {
+        color: var(--dark-brown);
+        margin-bottom: 8px;
+        font-size: 30px;
+    }
+
+    .heading p {
+        color: #666;
+    }
+
+    .form-container {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        max-width: 800px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--dark-brown);
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: 'Poppins', sans-serif;
+        transition: 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--soft-orange);
+        box-shadow: 0 0 0 3px rgba(255,179,71,0.15);
+    }
+
+    .form-group input[readonly] {
+        background: #f8f9fa;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    .buttons {
+        margin-top: 30px;
+        display: flex;
+        gap: 12px;
+    }
+
+    .saveBtn {
+        background: var(--soft-orange);
+        color: var(--dark-brown);
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        font-family: 'Poppins', sans-serif;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .saveBtn:hover {
+        background: #f5a63a;
+        transform: translateY(-2px);
+    }
+
+    .cancelBtn {
+        background: var(--dark-brown);
+        color: white;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-family: 'Poppins', sans-serif;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .cancelBtn:hover {
+        background: #4a332c;
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .validation {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+    
+    small {
+        display: block;
+        margin-top: 6px;
+        color: #888;
+        font-size: 12px;
+    }
+</style>
+
+
+<div class="heading">
+    <h1>Edit User</h1>
+    <p>Update registered user information</p>
+</div>
+
+<div class="form-container">
+
+    <form asp-controller="Admin"
+          asp-action="EditUser"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <!-- Hidden Database ID -->
+        <input type="hidden"
+               name="id"
+               value="@Model.Id" />
+
+
+        <!-- ================= USER ID ================= -->
+        <div class="form-group">
+            <label>
+                User ID
+            </label>
+            <input type="text"
+                   value="@Model.Id"
+                   readonly />
+        </div>
+
+
+        <!-- ================= NAME ================= -->
+        <div class="form-group">
+            <label>
+                Full Name
+            </label>
+            <input type="text"
+                   name="fullName"
+                   value="@Model.FullName"
+                   placeholder="Enter user name" />
+            <span asp-validation-for="FullName"
+                  class="validation">
+            </span>
+        </div>
+
+
+        <!-- ================= EMAIL ================= -->
+        <div class="form-group">
+            <label>
+                Email
+            </label>
+            <input type="email"
+                   name="email"
+                   value="@Model.Email"
+                   placeholder="Enter email address" />
+            <span asp-validation-for="Email"
+                  class="validation">
+            </span>
+        </div>
+
+
+        <!-- ================= ROLE ================= -->
+        <div class="form-group">
+            <label>
+                Role
+            </label>
+            <select name="userRole">
+                @if (Model.UserRole == "Customer")
+                {
+                    <option value="Customer" selected>Customer</option>
+                }
+                else
+                {
+                    <option value="Customer">Customer</option>
+                }
+
+                @if (Model.UserRole == "Seller")
+                {
+                    <option value="Seller" selected>Kitchen Owner (Seller)</option>
+                }
+                else
+                {
+                    <option value="Seller">Kitchen Owner (Seller)</option>
+                }
+
+                @if (Model.UserRole == "Admin")
+                {
+                    <option value="Admin" selected>Admin</option>
+                }
+                else
+                {
+                    <option value="Admin">Admin</option>
+                }
+            </select>
+        </div>
+
+
+        <!-- ================= STATUS ================= -->
+        <div class="form-group">
+            <label>
+                Seller Status
+            </label>
+            <select name="sellerStatus">
+                @if (Model.SellerStatus == "Approved")
+                {
+                    <option value="Approved" selected>Approved</option>
+                }
+                else
+                {
+                    <option value="Approved">Approved</option>
+                }
+
+                @if (Model.SellerStatus == "Pending")
+                {
+                    <option value="Pending" selected>Pending</option>
+                }
+                else
+                {
+                    <option value="Pending">Pending</option>
+                }
+
+                @if (Model.SellerStatus == "Rejected")
+                {
+                    <option value="Rejected" selected>Rejected</option>
+                }
+                else
+                {
+                    <option value="Rejected">Rejected</option>
+                }
+            </select>
+            <small>Only applies if the user is a Kitchen Owner (Seller).</small>
+        </div>
+
+
+        <!-- ================= BUTTONS ================= -->
+        <div class="buttons">
+            <button type="submit" class="saveBtn">
+                <i class="fa-solid fa-floppy-disk"></i> Save Changes
+            </button>
+
+            <a asp-controller="Admin"
+               asp-action="ManageUsers"
+               class="cancelBtn">
+                <i class="fa-solid fa-xmark"></i> Cancel
+            </a>
+        </div>
+
+    </form>
+</div>

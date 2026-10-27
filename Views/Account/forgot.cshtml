@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "Forgot Password";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="forgot-container">
+
+    <h2>Forgot Password?</h2>
+
+    <p>
+        Enter your registered email address to reset your password.
+    </p>
+
+    <form asp-controller="Account"
+          asp-action="Forgot"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="forgot-alert forgot-alert-warning" role="alert">
+                <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div class="alert-text">
+                    @foreach (var modelError in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <p>@modelError.ErrorMessage</p>
+                    }
+                </div>
+            </div>
+        }
+
+        <input type="email"
+               name="email"
+               placeholder="Enter your email"
+               autocomplete="email"
+               required />
+
+        <button type="submit">
+            Send Reset Link
+        </button>
+
+    </form>
+
+    <div class="back-links">
+        <a asp-controller="Account"
+           asp-action="Login">
+            Back to Login
+        </a>
+    </div>
+
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="back-home">
+        ← Back to Home
+    </a>
+
+</div>

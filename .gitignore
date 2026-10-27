@@ -1,0 +1,25 @@
+## Visual Studio & .NET Core
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.csproj.user
+
+[Bb]in/
+[Oo]bj/
+
+.vscode/
+
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+*.nupkg
+*.snupkg
+
+*.bak
+*.tmp
+scratch/
+
+.DS_Store
+Thumbs.db

@@ -1,0 +1,329 @@
+@model Cloud_Kitchen_web_App.Models.ApplicationUser
+
+@{
+    ViewData["Title"] = "User Details";
+    Layout = "~/Views/Shared/Admin.cshtml";
+
+    var isBlocked = Model.LockoutEnd.HasValue && Model.LockoutEnd.Value > DateTimeOffset.UtcNow;
+    var displayName = string.IsNullOrWhiteSpace(Model.FullName) ? "N/A" : Model.FullName;
+    var displayEmail = string.IsNullOrWhiteSpace(Model.Email) ? "N/A" : Model.Email;
+    var displayRole = string.IsNullOrWhiteSpace(Model.UserRole) ? "Customer" : Model.UserRole;
+    var displayPhone = string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "N/A" : Model.PhoneNumber;
+    var displayCity = string.IsNullOrWhiteSpace(Model.City) ? "N/A" : Model.City;
+    var sellerStatus = string.IsNullOrWhiteSpace(Model.SellerStatus) ? "Pending" : Model.SellerStatus;
+}
+
+<style>
+    .heading {
+        margin-bottom: 25px;
+    }
+
+    .heading h1 {
+        color: var(--dark-brown, #5D4037);
+        margin-bottom: 8px;
+        font-size: 30px;
+    }
+
+    .heading p {
+        color: #666;
+    }
+
+    .details-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        max-width: 750px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .card-top {
+        background: linear-gradient(135deg, #FFB347 0%, #ff9800 100%);
+        padding: 24px 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .avatar-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #5D4037;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .card-title-info h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        color: #5D4037;
+        font-weight: 700;
+    }
+
+    .card-title-info p {
+        margin: 4px 0 0;
+        color: rgba(93, 64, 55, 0.9);
+        font-size: 0.95rem;
+    }
+
+    .badges-row {
+        padding: 16px 30px 4px;
+        background: #faf7f2;
+        border-bottom: 1px solid #f0e6d9;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .badge-role {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .badge-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-blocked {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .badge-verified {
+        background: #cff4fc;
+        color: #055160;
+    }
+
+    .grid-info {
+        padding: 24px 30px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+
+    @@media (max-width: 600px) {
+        .grid-info {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .info-item {
+        background: #fdfaf6;
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid #f3ece3;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #8c7667;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #3e2723;
+        word-break: break-all;
+    }
+
+    .actions-footer {
+        padding: 18px 30px 24px;
+        background: white;
+        border-top: 1px solid #f0e6d9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .btn-back {
+        background: #5D4037;
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.2s;
+    }
+
+    .btn-back:hover {
+        background: #4a332c;
+        color: white;
+    }
+
+    .btn-toggle-block {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.2s;
+        color: white;
+    }
+
+    .btn-block {
+        background: #dc3545;
+    }
+
+    .btn-block:hover {
+        background: #c82333;
+    }
+
+    .btn-unblock {
+        background: #ff9800;
+    }
+
+    .btn-unblock:hover {
+        background: #e68900;
+    }
+</style>
+
+<div class="heading">
+    <h1>User Details</h1>
+    <p>View complete registered user information</p>
+</div>
+
+<div class="details-card">
+    <div class="card-top">
+        <div class="avatar-circle">
+            @(displayName.Length > 0 && displayName != "N/A" ? displayName[0].ToString().ToUpper() : "U")
+        </div>
+        <div class="card-title-info">
+            <h2>@displayName</h2>
+            <p><i class="fa-solid fa-envelope"></i> @displayEmail</p>
+        </div>
+    </div>
+
+    <div class="badges-row">
+        <span class="badge-pill badge-role">
+            <i class="fa-solid fa-user-tag"></i> @displayRole
+        </span>
+        @if (isBlocked)
+        {
+            <span class="badge-pill badge-blocked">
+                <i class="fa-solid fa-ban"></i> Blocked
+            </span>
+        }
+        else
+        {
+            <span class="badge-pill badge-active">
+                <i class="fa-solid fa-check"></i> Active
+            </span>
+        }
+        @if (Model.EmailConfirmed)
+        {
+            <span class="badge-pill badge-verified">
+                <i class="fa-solid fa-check-circle"></i> Email Verified
+            </span>
+        }
+        else
+        {
+            <span class="badge-pill badge-blocked">
+                <i class="fa-solid fa-times-circle"></i> Unverified
+            </span>
+        }
+    </div>
+
+    <div class="grid-info">
+        <div class="info-item">
+            <span class="info-label"><i class="fa-solid fa-id-badge"></i> User ID</span>
+            <span class="info-value" style="font-family: monospace; font-size: 0.85rem;">@Model.Id</span>
+        </div>
+
+        <div class="info-item">
+            <span class="info-label"><i class="fa-solid fa-user"></i> Full Name</span>
+            <span class="info-value">@displayName</span>
+        </div>
+
+        <div class="info-item">
+            <span class="info-label"><i class="fa-solid fa-envelope"></i> Email Address</span>
+            <span class="info-value">@displayEmail</span>
+        </div>
+
+        <div class="info-item">
+            <span class="info-label"><i class="fa-solid fa-phone"></i> Phone Number</span>
+            <span class="info-value">@displayPhone</span>
+        </div>
+
+        <div class="info-item">
+            <span class="info-label"><i class="fa-solid fa-city"></i> City</span>
+            <span class="info-value">@displayCity</span>
+        </div>
+
+        <div class="info-item">
+            <span class="info-label"><i class="fa-solid fa-shield"></i> User Role</span>
+            <span class="info-value">@displayRole</span>
+        </div>
+
+        @if (string.Equals(Model.UserRole, "Seller", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="info-item">
+                <span class="info-label"><i class="fa-solid fa-store"></i> Seller Status</span>
+                <span class="info-value">@sellerStatus</span>
+            </div>
+        }
+
+        <div class="info-item">
+            <span class="info-label"><i class="fa-solid fa-lock"></i> Account Status</span>
+            <span class="info-value">@(isBlocked ? "Blocked" : "Active")</span>
+        </div>
+    </div>
+
+    <div class="actions-footer">
+        <a asp-controller="Admin" asp-action="ManageUsers" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i> Back to Users
+        </a>
+
+        <form asp-controller="Admin" asp-action="ToggleUserStatus" method="post" style="display:inline;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            @if (isBlocked)
+            {
+                <button type="submit" class="btn-toggle-block btn-unblock" onclick="return confirm('Unblock this user?');">
+                    <i class="fa-solid fa-lock-open"></i> Unblock User
+                </button>
+            }
+            else
+            {
+                <button type="submit" class="btn-toggle-block btn-block" onclick="return confirm('Block this user?');">
+                    <i class="fa-solid fa-ban"></i> Block User
+                </button>
+            }
+        </form>
+    </div>
+</div>

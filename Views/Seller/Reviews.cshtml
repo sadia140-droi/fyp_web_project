@@ -1,0 +1,354 @@
+@model Cloud_Kitchen_web_App.Models.SellerReviewsViewModel
+
+@{
+    ViewBag.Title = "Customer Reviews - " + Model.KitchenName;
+    Layout = "~/Views/Shared/_SellerLayout.cshtml";
+
+    var starBreakdowns = new[]
+    {
+        new { Star = 5, Count = Model.FiveStarCount },
+        new { Star = 4, Count = Model.FourStarCount },
+        new { Star = 3, Count = Model.ThreeStarCount },
+        new { Star = 2, Count = Model.TwoStarCount },
+        new { Star = 1, Count = Model.OneStarCount }
+    };
+}
+
+<style>
+    .seller-reviews-wrapper {
+        width: 100%;
+    }
+
+    .page-title-box {
+        margin-bottom: 24px;
+    }
+
+    .page-title-box h1 {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--dark-brown);
+        margin-bottom: 6px;
+    }
+
+    .page-title-box p {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .summary-card-mega {
+        background: var(--white);
+        padding: 26px;
+        border-radius: 18px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border);
+        margin-bottom: 24px;
+    }
+
+    .overview-flex {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .rating-hero-col {
+        min-width: 220px;
+        text-align: center;
+        padding-right: 20px;
+        border-right: 1px solid var(--border);
+    }
+
+    .rating-big-num {
+        font-size: 52px;
+        font-weight: 800;
+        color: var(--dark-brown);
+        line-height: 1;
+    }
+
+    .gold-stars {
+        color: #FFD700;
+        font-size: 22px;
+        margin: 8px 0;
+    }
+
+    .recent-chip {
+        display: inline-block;
+        background: #fff4e5;
+        color: var(--dark-brown);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 16px;
+        margin-top: 10px;
+    }
+
+    .bars-col {
+        flex: 1;
+        min-width: 260px;
+    }
+
+    .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+
+    .bar-label {
+        width: 45px;
+        font-weight: 600;
+        color: var(--dark-brown);
+    }
+
+    .bar-track {
+        flex: 1;
+        height: 10px;
+        background: #f0ece6;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #FFB347, #f39a24);
+        border-radius: 6px;
+    }
+
+    .bar-count {
+        width: 70px;
+        text-align: right;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .reviews-list-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .review-card-item {
+        background: var(--white);
+        padding: 20px 22px;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--border);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .review-card-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .review-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .order-badge-tag {
+        font-weight: 600;
+        color: var(--dark-brown);
+        background: var(--soft-orange-light);
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        margin-right: 8px;
+    }
+
+    .customer-name-tag {
+        font-weight: 700;
+        color: var(--dark-brown);
+        font-size: 15px;
+    }
+
+    .verified-pill {
+        background: #eaf7ee;
+        color: #2e7d32;
+        font-weight: 600;
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 8px;
+    }
+
+    .review-card-comment {
+        background: #faf7f2;
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid #ede5da;
+        font-size: 14px;
+        color: #444;
+        font-style: italic;
+        line-height: 1.5;
+        margin-top: 10px;
+    }
+
+    .empty-state-card {
+        background: var(--white);
+        border-radius: 18px;
+        padding: 60px 20px;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border);
+        color: var(--muted);
+    }
+
+    .empty-state-card i {
+        font-size: 48px;
+        color: var(--soft-orange);
+        margin-bottom: 14px;
+    }
+
+    .empty-state-card h3 {
+        color: var(--dark-brown);
+        font-size: 20px;
+        margin-bottom: 6px;
+        font-weight: 700;
+    }
+
+    @@media (max-width: 768px) {
+        .rating-hero-col {
+            border-right: none;
+            border-bottom: 1px solid var(--border);
+            padding-right: 0;
+            padding-bottom: 20px;
+            width: 100%;
+        }
+    }
+</style>
+
+<main class="main-content">
+    <div class="seller-reviews-wrapper">
+        <!-- HEADER -->
+        <div class="page-title-box">
+            <h1>Customer Reviews</h1>
+            <p>Real customer ratings, feedback, and star breakdown for <strong>@Model.KitchenName</strong>.</p>
+        </div>
+
+        <!-- TOP SUMMARY CARD -->
+        <div class="summary-card-mega">
+            <div class="overview-flex">
+                <!-- BIG AVERAGE + STARS + TOTAL + 30-DAY COUNT -->
+                <div class="rating-hero-col">
+                    <div class="rating-big-num">
+                        @(Model.AverageRating > 0 ? Model.AverageRating.ToString("0.0") : "0.0")
+                    </div>
+                    <div class="gold-stars">
+                        @for (int s = 1; s <= 5; s++)
+                        {
+                            if (s <= Math.Round(Model.AverageRating))
+                            {
+                                <i class="fas fa-star"></i>
+                            }
+                            else
+                            {
+                                <i class="far fa-star text-muted" style="opacity: 0.35;"></i>
+                            }
+                        }
+                    </div>
+                    <div style="color: var(--muted); font-size: 13px; font-weight: 500;">
+                        @Model.TotalReviews @(Model.TotalReviews == 1 ? "Total Review" : "Total Reviews")
+                    </div>
+                    <div class="recent-chip">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        @Model.Recent30DaysReviewsCount in last 30 days
+                    </div>
+                </div>
+
+                <!-- 5 TO 1 STAR DISTRIBUTION BARS -->
+                <div class="bars-col">
+                    @foreach (var sb in starBreakdowns)
+                    {
+                        var pct = Model.TotalReviews > 0 ? (int)Math.Round((double)sb.Count / Model.TotalReviews * 100) : 0;
+                        <div class="bar-row">
+                            <div class="bar-label">
+                                @sb.Star <i class="fas fa-star" style="color: #FFD700; font-size: 11px;"></i>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: @pct%;"></div>
+                            </div>
+                            <div class="bar-count">
+                                @sb.Count (@pct%)
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- REVIEWS LIST -->
+        @if (Model.Reviews != null && Model.Reviews.Any())
+        {
+            <div class="reviews-list-container">
+                @foreach (var review in Model.Reviews)
+                {
+                    <div class="review-card-item">
+                        <div class="review-card-header">
+                            <div>
+                                <span class="order-badge-tag">#@review.OrderId</span>
+                                <span class="customer-name-tag">@review.CustomerFirstName</span>
+                                <span class="verified-pill">
+                                    <i class="fas fa-check-circle"></i>Verified Order
+                                </span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--muted);">
+                                @review.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")
+                            </div>
+                        </div>
+
+                        <!-- STARS -->
+                        <div style="color: #FFD700; font-size: 14px;">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= review.Rating)
+                                {
+                                    <i class="fas fa-star"></i>
+                                }
+                                else
+                                {
+                                    <i class="far fa-star text-muted" style="opacity: 0.35;"></i>
+                                }
+                            }
+                            <span style="color: var(--dark-brown); font-size: 12px; font-weight: 700; margin-left: 4px;">
+                                @review.Rating/5
+                            </span>
+                        </div>
+
+                        <!-- COMMENT -->
+                        @if (!string.IsNullOrWhiteSpace(review.Comment))
+                        {
+                            <div class="review-card-comment">
+                                "@review.Comment"
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="margin-top: 8px; font-size: 13px; color: var(--muted); font-style: italic;">
+                                Customer gave rating without a written comment.
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state-card">
+                <i class="fa-regular fa-comment-dots"></i>
+                <h3>No reviews yet</h3>
+                <p>Your kitchen has not received any customer reviews yet.</p>
+            </div>
+        }
+    </div>
+</main>

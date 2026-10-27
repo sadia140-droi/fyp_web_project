@@ -1,0 +1,274 @@
+@model Cloud_Kitchen_web_App.Models.MenuViewModel
+
+@{
+    ViewBag.Title = "Manage Menu";
+    Layout = "~/Views/Shared/_SellerLayout.cshtml";
+}
+
+<style>
+    .menu-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    .menu-header h2 {
+        color: var(--dark-brown);
+        margin: 0;
+    }
+    .controls-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+        align-items: center;
+    }
+    .controls-row input, .controls-row select {
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        outline: none;
+    }
+    .menu-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    .menu-item-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        overflow: hidden;
+        position: relative;
+        transition: transform 0.2s;
+    }
+    .menu-item-card:hover {
+        transform: translateY(-4px);
+    }
+    .menu-item-img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        background: #eee;
+    }
+    .menu-item-content {
+        padding: 16px;
+    }
+    .menu-item-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+        color: #333;
+    }
+    .menu-item-price {
+        font-weight: 700;
+        color: var(--soft-orange);
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    .menu-item-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+    }
+    .action-btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        flex: 1;
+        transition: 0.2s;
+        text-align: center;
+    }
+    .btn-edit {
+        background: #f0f0f0;
+        color: #333;
+    }
+    .btn-edit:hover { background: #e0e0e0; }
+    .btn-delete {
+        background: #ffe5e5;
+        color: #d32f2f;
+    }
+    .btn-delete:hover { background: #ffcccc; }
+    
+    .badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: rgba(255,255,255,0.95);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .badge-deal {
+        top: 12px;
+        left: 12px;
+        right: auto;
+        background: #ff4757;
+        color: white;
+    }
+    
+    /* Modal Styling */
+    .modal-backdrop {
+        position: fixed; top:0; left:0; width:100%; height:100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal {
+        background: #fff;
+        padding: 24px;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #555; }
+    .form-control { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; outline: none; }
+    .form-control:focus { border-color: var(--soft-orange); }
+</style>
+
+<main class="main-content">
+    <div class="menu-header">
+        <h2>Menu Management</h2>
+        <button id="btnAdd" class="action-btn" style="background: var(--soft-orange); color: var(--dark-brown); max-width:180px;">+ Add New Item</button>
+    </div>
+
+    <div class="controls-row">
+        <input id="searchInput" type="text" placeholder="Search menu items..." style="flex: 1;" />
+        <select id="categoryFilter">
+            <option value="">All Categories</option>
+            @foreach(var cat in Model.Items.Select(x => x.Category).Where(c => !string.IsNullOrEmpty(c)).Distinct())
+            {
+                <option value="@cat">@cat</option>
+            }
+        </select>
+    </div>
+
+    <!-- Anti-forgery token for AJAX -->
+    <form id="menuAntiForgeryForm" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <div id="menuBody" class="menu-grid">
+        @if (!Model.Items.Any())
+        {
+            <div id="btnAddEmpty" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: #fff; border-radius: 12px; cursor:pointer; border: 2px dashed #ddd;">
+                <h3 style="color:var(--muted); margin-bottom: 10px;">No menu items found</h3>
+                <p style="color: #888;">Click here or the "Add New Item" button to create your first dish!</p>
+            </div>
+        }
+        else
+        {
+            foreach (var item in Model.Items)
+            {
+                <div class="menu-item-card" 
+                     data-id="@item.Id" 
+                     data-name="@item.Name" 
+                     data-category="@item.Category" 
+                     data-desc="@item.Description" 
+                     data-price="@item.Price" 
+                     data-avail="@item.Available.ToString().ToLower()" 
+                     data-deal="@item.IsDeal.ToString().ToLower()"
+                     data-image="@item.Image">
+                     
+                    @if (item.IsDeal)
+                    {
+                        <span class="badge badge-deal">Special Deal</span>
+                    }
+                    
+                    <span class="badge" style="color: @(item.Available ? "green" : "red")">
+                        @(item.Available ? "Available" : "Sold Out")
+                    </span>
+
+                    <img src="@(string.IsNullOrEmpty(item.Image) ? "/images/kitchens/default-kitchen.jpg" : item.Image)" alt="@item.Name" class="menu-item-img" />
+                    
+                    <div class="menu-item-content">
+                        <div style="font-size: 0.85rem; color: #888; margin-bottom: 4px; font-weight: 600;">@(string.IsNullOrEmpty(item.Category) ? "Other" : item.Category)</div>
+                        <div class="menu-item-title">@item.Name</div>
+                        <div class="menu-item-price">Rs. @item.Price.ToString("N2")</div>
+                        
+                        <div class="menu-item-actions">
+                            <button type="button" class="action-btn btn-edit btnEditItem" data-id="@item.Id">Edit</button>
+                            <button type="button" class="action-btn btn-delete btnDeleteItem" data-id="@item.Id">Delete</button>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; cursor:pointer;">
+                                <input type="checkbox" class="toggle-avail" data-id="@item.Id" @(item.Available ? "checked" : "") />
+                                <span>In Stock</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</main>
+
+<!-- Menu Item Modal -->
+<div id="modalBackdrop" class="modal-backdrop" style="display:none;">
+    <div class="modal">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 id="modalTitle" style="margin: 0; color: var(--dark-brown);">Add Menu Item</h3>
+            <button type="button" id="btnCancelForm" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #888;">&times;</button>
+        </div>
+
+        <div id="formMessage" style="color: red; margin-bottom: 15px; font-weight: 600; text-align: center;"></div>
+
+        <form id="menuItemForm" enctype="multipart/form-data">
+            <input type="hidden" id="itemId" name="Id" value="0" />
+            
+            <div class="form-group">
+                <label for="itemName">Item Name *</label>
+                <input type="text" id="itemName" name="Name" class="form-control" required placeholder="e.g. Chicken Biryani" />
+            </div>
+
+            <div style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="itemPrice">Price (Rs.) *</label>
+                    <input type="number" id="itemPrice" name="Price" class="form-control" step="0.01" min="0" required placeholder="0.00" />
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="itemCategory">Category</label>
+                    <input type="text" id="itemCategory" name="Category" class="form-control" placeholder="e.g. Fast Food" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="itemDescription">Description</label>
+                <textarea id="itemDescription" name="Description" class="form-control" rows="3" placeholder="Describe the ingredients, taste, etc."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="itemImage">Upload Item Image</label>
+                <input type="file" id="itemImage" name="Image" class="form-control" accept="image/*" />
+                <div style="margin-top:10px;">
+                    <img id="imgPreview" src="" alt="Preview" style="max-width: 120px; display: none; border-radius: 8px; border: 1px solid #ddd;" />
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 24px; margin-bottom: 24px; padding: 12px; background: #f9f9f9; border-radius: 8px;">
+                <label style="display:flex; align-items:center; gap:8px; cursor: pointer; font-weight: 600; color: #333;">
+                    <input type="checkbox" id="itemAvail" name="Available" value="true" checked />
+                    Available (In Stock)
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; cursor: pointer; font-weight: 600; color: #333;">
+                    <input type="checkbox" id="itemDeal" name="IsDeal" value="true" />
+                    Mark as Deal
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" id="cancelItem" class="action-btn" style="background:#eee; color: #333;">Cancel</button>
+                <button type="submit" id="saveItem" class="action-btn" style="background:var(--soft-orange); color:var(--dark-brown);">Save Item</button>
+            </div>
+        </form>
+    </div>
+</div>

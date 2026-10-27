@@ -1,0 +1,107 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+:root {
+  --page-bg: #F5E6CA;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+  background-color: var(--page-bg) !important;
+}
+
+body {
+  margin-bottom: 60px;
+  background-color: var(--page-bg) !important;
+}
+
+/* ========================================================
+   GLOBAL LOGO STYLING: Transparent Background & Uniform Size (50x50) On All Screens
+   ======================================================== */
+.brand-logo,
+.customer-logo,
+.mobile-logo img,
+.brand-group .logo img,
+.top-bar .left img,
+.top-bar img,
+.brand img,
+.logo img {
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px !important;
+  min-height: 50px !important;
+  max-width: 50px !important;
+  max-height: 50px !important;
+  object-fit: contain !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.brand-group .logo,
+.mobile-logo,
+.topbar .logo,
+.brand {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ========================================================
+   GLOBAL PROFILE AVATAR & LETTER FALLBACK STYLING
+   ======================================================== */
+.profile-avatar-letter,
+.avatar-letter,
+.avatar-letter-circle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #FFB347 0%, #f39a24 100%) !important;
+    color: #5D4037 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    border-radius: 50% !important;
+    border: 2px solid rgba(255, 255, 255, 0.9) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    flex-shrink: 0 !important;
+    user-select: none !important;
+    font-family: 'Poppins', sans-serif !important;
+    line-height: 1 !important;
+    text-align: center !important;
+}
+
+.profile-box .avatar-letter,
+.profile-box .profile-avatar-letter {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+}
+
+.profile-card .profile-box .profile-avatar-letter,
+.avatar-letter-lg {
+    width: 90px !important;
+    height: 90px !important;
+    font-size: 36px !important;
+}
+
+.avatar-letter-sm {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 11px !important;
+    border-width: 1.5px !important;
+}

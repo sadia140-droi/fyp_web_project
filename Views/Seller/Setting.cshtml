@@ -1,0 +1,317 @@
+@model Cloud_Kitchen_web_App.Models.SettingViewModel
+
+@{
+    ViewData["Title"] = "Settings - Cloud Kitchen (Seller)";
+    Layout = "~/Views/Shared/_SellerLayout.cshtml";
+}
+
+<main class="main-content">
+
+    <div class="profile-box">
+        @{
+            var sName = string.IsNullOrWhiteSpace(Model.SellerName) ? "Seller" : Model.SellerName.Trim();
+            var sParts = sName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var sInitials = sParts.Length > 1 
+                ? $"{sParts[0][0]}{sParts[sParts.Length - 1][0]}".ToUpper() 
+                : sParts[0].Substring(0, 1).ToUpper();
+        }
+        <div class="profile-avatar-letter" title="@sName">@sInitials</div>
+
+        <div class="meta">
+            <div class="name">
+                @Model.SellerName
+            </div>
+
+            <div class="small">
+                Seller • @Model.KitchenName
+            </div>
+        </div>
+    </div>
+
+    <!-- Store Status -->
+    <div class="card">
+
+        <div class="section-title">
+            Store Status
+        </div>
+
+        <div style="
+            display:flex;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+        ">
+
+            <label class="toggle">
+                <input id="storeOpen"
+                       type="checkbox"
+                       @(Model.StoreOpen ? "checked" : "") />
+
+                <span class="small">
+                    Open for orders
+                </span>
+            </label>
+
+            <div style="margin-left:auto"
+                 class="small"
+                 id="storeStatusText">
+
+                @(Model.StoreOpen ? "Open" : "Closed")
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Business Hours -->
+    <div class="card">
+
+        <div class="section-title">
+            Business Hours
+        </div>
+
+        <div class="row">
+
+            <div class="col">
+
+                <label for="openTime">
+                    Open Time
+                </label>
+
+                <input id="openTime"
+                       type="time"
+                       value="@Model.OpenTime" />
+
+            </div>
+
+
+            <div class="col">
+
+                <label for="closeTime">
+                    Close Time
+                </label>
+
+                <input id="closeTime"
+                       type="time"
+                       value="@Model.CloseTime" />
+
+            </div>
+
+        </div>
+
+        <div class="small">
+            These hours are saved to your kitchen settings.
+        </div>
+
+    </div>
+
+
+    <!-- Delivery Settings -->
+    <div class="card">
+
+        <div class="section-title">
+            Delivery Settings
+        </div>
+
+        <div class="row">
+
+            <div class="col">
+
+                <label for="deliveryRatePerKm">
+                    Delivery Rate per KM (PKR)
+                </label>
+
+                <input id="deliveryRatePerKm"
+                       type="number"
+                       min="10"
+                       max="500"
+                       step="1"
+                       value="@Model.DeliveryRatePerKm" />
+
+            </div>
+
+        </div>
+
+        <div class="small">
+            Your customers are charged dynamic delivery fees strictly calculated per kilometer based on this rate.
+        </div>
+
+    </div>
+
+
+    <!-- Save Settings -->
+    <div class="card">
+
+        <div style="
+            display:flex;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+        ">
+
+            <button id="btnSaveAll"
+                    type="button"
+                    class="btn btn-save">
+
+                Save Settings
+
+            </button>
+
+            <div id="settingsMsg"
+                 class="small"
+                 style="margin-left:10px;">
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+
+@Html.AntiForgeryToken()
+
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const storeOpen =
+            document.getElementById("storeOpen");
+
+        const storeStatusText =
+            document.getElementById("storeStatusText");
+
+        const openTime =
+            document.getElementById("openTime");
+
+        const closeTime =
+            document.getElementById("closeTime");
+
+        const deliveryRatePerKm =
+            document.getElementById("deliveryRatePerKm");
+
+        const saveButton =
+            document.getElementById("btnSaveAll");
+
+        const settingsMsg =
+            document.getElementById("settingsMsg");
+
+        const antiForgeryToken =
+            document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            );
+
+
+        function updateStoreStatusText() {
+
+            if (storeOpen.checked) {
+
+                storeStatusText.textContent = "Open";
+
+            } else {
+
+                storeStatusText.textContent = "Closed";
+
+            }
+        }
+
+
+        storeOpen.addEventListener(
+            "change",
+            updateStoreStatusText
+        );
+
+
+        saveButton.addEventListener(
+            "click",
+            async function () {
+
+                settingsMsg.textContent = "";
+                saveButton.disabled = true;
+                saveButton.textContent = "Saving...";
+
+
+                const payload = {
+
+                    storeOpen:
+                        storeOpen.checked,
+
+                    openTime:
+                        openTime.value,
+
+                    closeTime:
+                        closeTime.value,
+
+                    deliveryRatePerKm:
+                        parseFloat(deliveryRatePerKm.value) || 30
+
+                };
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            '@Url.Action("UpdateSellerSettings", "Seller")',
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json",
+
+                                    "RequestVerificationToken":
+                                        antiForgeryToken.value
+                                },
+
+                                body:
+                                    JSON.stringify(payload)
+                            }
+                        );
+
+
+                    const result =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            result.message ||
+                            "Unable to save settings."
+                        );
+
+                    }
+
+
+                    settingsMsg.textContent =
+                        result.message ||
+                        "Settings saved successfully.";
+
+                    updateStoreStatusText();
+
+                }
+                catch (error) {
+
+                    settingsMsg.textContent =
+                        error.message ||
+                        "Unable to save settings.";
+
+                }
+                finally {
+
+                    saveButton.disabled = false;
+                    saveButton.textContent =
+                        "Save Settings";
+
+                }
+
+            }
+        );
+
+    });
+
+</script>

@@ -1,0 +1,358 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+    var rawGoogleClientId = Configuration["Authentication:Google:ClientId"]
+                          ?? Configuration["Google:ClientId"]
+                          ?? "159284505884-f9krc67aes4j0ojj566o9754p2gd8ne8.apps.googleusercontent.com";
+    var googleClientId = rawGoogleClientId.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                          .FirstOrDefault() ?? "159284505884-f9krc67aes4j0ojj566o9754p2gd8ne8.apps.googleusercontent.com";
+}
+
+<div class="login-container">
+
+    <h2>Login to Cloud Kitchen</h2>
+
+        <form asp-controller="Account"
+              asp-action="Login"
+              method="post"
+              id="loginForm"
+              autocomplete="on"
+              novalidate>
+
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="All"
+                 class="text-danger">
+            </div>
+
+            <!-- EMAIL -->
+            <input type="email"
+                   name="Email"
+                   id="loginEmail"
+                   placeholder="Google Email (e.g., yourname@gmail.com)"
+                   autocomplete="email"
+                   required />
+
+            <span class="field-error text-danger"
+                  id="emailError"
+                  style="display: none; font-size: 0.85rem; margin-top: -8px; margin-bottom: 12px; text-align: left; width: 100%;"></span>
+
+        <!-- PASSWORD -->
+        <div class="password-wrapper">
+
+            <input type="password"
+                   id="loginPassword"
+                   name="Password"
+                   placeholder="Password"
+                   autocomplete="current-password"
+                   required />
+
+            <button type="button"
+                    class="password-toggle"
+                    onclick="togglePassword('loginPassword', this)"
+                    aria-label="Show password"
+                    style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); z-index: 10; background: transparent; border: none;">
+
+                <!-- Eye icon -->
+                <svg class="eye-icon"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+
+                </svg>
+
+            </button>
+
+        </div>
+
+        <!-- LOGIN BUTTON -->
+        <button type="submit">
+            Login
+        </button>
+
+    </form>
+
+    <!-- OR DIVIDER -->
+    <div class="auth-divider">
+        <span>OR</span>
+    </div>
+
+    <!-- GOOGLE SIGN-IN BUTTON CONTAINER -->
+    <div id="googleBtnContainer" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <button type="button" class="btn-google" id="btnGoogleSignIn" onclick="triggerGoogleSignIn()">
+            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span id="btnGoogleText">Sign in with Google</span>
+        </button>
+        <div id="g_id_signin" style="display: none; width: 100%;"></div>
+    </div>
+
+    <!-- GOOGLE AUTH ERROR ALERT -->
+    <div id="googleAuthError" class="text-danger" style="margin-top: 10px; font-size: 0.85rem; display: none;"></div>
+
+    <!-- FORGOT PASSWORD -->
+    <a asp-controller="Account"
+       asp-action="Forgot"
+       class="forgot-link">
+        Forgot Password?
+    </a>
+
+    <!-- SIGNUP -->
+    <a asp-controller="Account"
+       asp-action="Signup"
+       class="signup-link">
+        Don't have an account? Sign Up
+    </a>
+
+    <!-- HOME -->
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="signup-link"
+       style="color:var(--soft-orange);">
+        ← Back to Home
+    </a>
+
+</div>
+
+<!-- Google Identity Services client script -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script>
+    const googleClientId = "@googleClientId";
+
+    function togglePassword(inputId, button) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        if (input.type === "password") {
+            input.type = "text";
+            button.setAttribute("aria-label", "Hide password");
+        } else {
+            input.type = "password";
+            button.setAttribute("aria-label", "Show password");
+        }
+    }
+
+    function initGoogleAuth() {
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+            google.accounts.id.initialize({
+                client_id: googleClientId,
+                callback: handleGoogleCredentialResponse,
+                auto_select: false,
+                cancel_on_tap_outside: true
+            });
+
+            const targetDiv = document.getElementById("g_id_signin");
+            if (targetDiv && googleClientId && !googleClientId.includes("AAPKI_CLIENT_ID_YAHAN")) {
+                try {
+                    google.accounts.id.renderButton(targetDiv, {
+                        theme: "outline",
+                        size: "large",
+                        width: 320,
+                        text: "signin_with",
+                        shape: "rectangular",
+                        logo_alignment: "left"
+                    });
+                    targetDiv.style.display = "block";
+                    const customBtn = document.getElementById("btnGoogleSignIn");
+                    if (customBtn) customBtn.style.display = "none";
+                } catch (e) {
+                    console.warn("Could not render official Google button: ", e);
+                }
+            }
+        }
+    }
+
+    window.addEventListener("load", function () {
+        if (window.google && window.google.accounts) {
+            initGoogleAuth();
+        } else {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                if (window.google && window.google.accounts) {
+                    clearInterval(interval);
+                    initGoogleAuth();
+                } else if (attempts > 20) {
+                    clearInterval(interval);
+                }
+            }, 250);
+        }
+    });
+
+    function triggerGoogleSignIn() {
+        const errorDiv = document.getElementById("googleAuthError");
+        errorDiv.style.display = "none";
+
+        if (!googleClientId || googleClientId.includes("AAPKI_CLIENT_ID_YAHAN")) {
+            errorDiv.textContent = "Please configure your real Google Client ID in appsettings.json to sign in with Google.";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+            errorDiv.textContent = "Google Sign-In is loading, please try again in a moment.";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        google.accounts.id.prompt((notification) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                console.log("Google prompt notification: ", notification);
+            }
+        });
+    }
+
+    async function handleGoogleCredentialResponse(response) {
+        const errorDiv = document.getElementById("googleAuthError");
+        const googleBtn = document.getElementById("btnGoogleSignIn");
+        const googleText = document.getElementById("btnGoogleText");
+
+        if (!response || !response.credential) {
+            errorDiv.textContent = "Google sign-in was cancelled or failed.";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        if (googleBtn) googleBtn.disabled = true;
+        if (googleText) googleText.textContent = "Signing in...";
+        errorDiv.style.display = "none";
+
+        try {
+            const res = await fetch('@Url.Action("GoogleLogin", "Account")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ idToken: response.credential })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = data.redirectUrl || '@Url.Action("Index", "Customer")';
+            } else {
+                errorDiv.textContent = data.message || "Failed to sign in with Google.";
+                errorDiv.style.display = "block";
+                if (googleBtn) googleBtn.disabled = false;
+                if (googleText) googleText.textContent = "Sign in with Google";
+            }
+        } catch (err) {
+            errorDiv.textContent = "Network error while connecting to server.";
+            errorDiv.style.display = "block";
+            if (googleBtn) googleBtn.disabled = false;
+            if (googleText) googleText.textContent = "Sign in with Google";
+        }
+    }
+
+    // ============================================================
+    // STRICT RFC-COMPLIANT EMAIL VALIDATION
+    // ============================================================
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@@(gmail\.com|googlemail\.com)$/i;
+    const loginForm = document.getElementById("loginForm");
+    const emailInput = document.getElementById("loginEmail");
+    const emailError = document.getElementById("emailError");
+    let emailTouched = false;
+
+    function validateEmailField() {
+        if (!emailInput || !emailError) return true;
+        const rawValue = emailInput.value;
+        const trimmed = rawValue.trim();
+        if (rawValue !== trimmed) {
+            emailInput.value = trimmed;
+        }
+
+        if (!trimmed) {
+            emailError.textContent = "Google Email address is required.";
+            emailError.style.display = "block";
+            emailInput.classList.add("input-error");
+            return false;
+        }
+
+        if (!emailRegex.test(trimmed)) {
+            emailError.textContent = "Only valid Google accounts (@@gmail.com) are allowed (e.g., yourname@@gmail.com).";
+            emailError.style.display = "block";
+            emailInput.classList.add("input-error");
+            return false;
+        }
+
+        emailError.textContent = "";
+        emailError.style.display = "none";
+        emailInput.classList.remove("input-error");
+        return true;
+    }
+
+    if (emailInput) {
+        emailInput.addEventListener("input", function () {
+            if (emailTouched) {
+                validateEmailField();
+            }
+        });
+        emailInput.addEventListener("blur", function () {
+            emailTouched = true;
+            validateEmailField();
+        });
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener("submit", function (e) {
+            emailTouched = true;
+            if (!validateEmailField()) {
+                e.preventDefault();
+                emailInput.focus();
+            }
+        });
+    }
+</script>
+
+<style>
+    .password-wrapper {
+        position: relative;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .password-wrapper input {
+        width: 100%;
+        padding-right: 48px;
+        margin-bottom: 0 !important;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        margin: 0;
+        background: transparent !important;
+        border: none;
+        color: #777;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .password-toggle:hover {
+        background: transparent !important;
+        color: var(--dark-brown);
+    }
+
+    .eye-icon {
+        width: 20px;
+        height: 20px;
+    }
+</style>

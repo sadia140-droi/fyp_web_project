@@ -1,0 +1,831 @@
+@model Cloud_Kitchen_web_App.Models.AdminLoginViewModel
+
+@{
+    ViewData["Title"] = "Admin Login";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin Login — Cloud Kitchen</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+
+        :root {
+            --soft-orange: #FFB347;
+            --orange-dark: #f39a24;
+            --beige: #F5E6CA;
+            --cream: #fffaf2;
+            --dark-brown: #5D4037;
+            --brown-light: #7a6258;
+            --white: #ffffff;
+            --border: #eadfd4;
+            --danger-bg: #fff1ef;
+            --danger: #c94b3c;
+            --shadow: 0 20px 55px rgba(93, 64, 55, 0.14);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at 15% 15%, rgba(255,179,71,.16), transparent 28%), radial-gradient(circle at 85% 85%, rgba(245,230,202,.55), transparent 32%), linear-gradient(135deg, #fffaf2 0%, #f8ecd7 100%);
+            color: var(--dark-brown);
+        }
+
+        /* =========================
+                   MAIN PAGE
+                   ========================= */
+
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 35px 22px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 1030px;
+            min-height: 610px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: var(--white);
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        /* =========================
+                   LEFT SIDE
+                   ========================= */
+
+        .login-intro {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 65px;
+            background: linear-gradient( 145deg, rgba(255,179,71,.98), rgba(245,190,113,.96) );
+            overflow: hidden;
+        }
+
+            .login-intro::before {
+                content: "";
+                position: absolute;
+                width: 330px;
+                height: 330px;
+                border-radius: 50%;
+                background: rgba(255,255,255,.13);
+                top: -145px;
+                left: -130px;
+            }
+
+            .login-intro::after {
+                content: "";
+                position: absolute;
+                width: 280px;
+                height: 280px;
+                border-radius: 50%;
+                background: rgba(255,255,255,.11);
+                right: -130px;
+                bottom: -120px;
+            }
+
+        .intro-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .brand-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            background: transparent !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            margin-bottom: 24px;
+        }
+
+        .intro-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            padding: 8px 14px;
+            border-radius: 30px;
+            background: rgba(255,255,255,.25);
+            border: 1px solid rgba(255,255,255,.35);
+            color: var(--dark-brown);
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 18px;
+        }
+
+            .intro-badge i {
+                font-size: 12px;
+            }
+
+        .login-intro h1 {
+            font-size: 38px;
+            line-height: 1.2;
+            font-weight: 700;
+            color: var(--dark-brown);
+            margin-bottom: 18px;
+            max-width: 400px;
+        }
+
+        .intro-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: rgba(93,64,55,.82);
+            max-width: 410px;
+            margin-bottom: 32px;
+        }
+
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--dark-brown);
+        }
+
+        .feature-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,.55);
+            color: var(--dark-brown);
+            font-size: 13px;
+        }
+
+        /* =========================
+                   RIGHT SIDE
+                   ========================= */
+
+        .login-form-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 55px 65px;
+            background: #fff;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 390px;
+        }
+
+        .mobile-logo {
+            display: none;
+        }
+
+        .form-heading {
+            margin-bottom: 30px;
+        }
+
+            .form-heading h2 {
+                font-size: 28px;
+                font-weight: 700;
+                color: var(--dark-brown);
+                margin-bottom: 7px;
+            }
+
+            .form-heading p {
+                font-size: 13px;
+                color: var(--brown-light);
+            }
+
+        /* =========================
+                   ERROR MESSAGE
+                   ========================= */
+
+        .alert-error {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            margin-bottom: 22px;
+            border-radius: 11px;
+            background: var(--danger-bg);
+            border: 1px solid #f2c9c3;
+            color: var(--danger);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+            .alert-error i {
+                margin-top: 2px;
+            }
+
+        /* =========================
+                   FORM
+                   ========================= */
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark-brown);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a99488;
+            font-size: 14px;
+            pointer-events: none;
+            transition: .2s ease;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 50px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: #fffdfb;
+            padding: 0 45px 0 43px;
+            outline: none;
+            color: var(--dark-brown);
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            transition: all .2s ease;
+        }
+
+            .form-control::placeholder {
+                color: #b5a9a2;
+            }
+
+            .form-control:focus {
+                border-color: var(--soft-orange);
+                background: #fff;
+                box-shadow: 0 0 0 4px rgba(255,179,71,.13);
+            }
+
+        .input-wrapper:focus-within .input-icon {
+            color: var(--orange-dark);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: #a99488;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px;
+        }
+
+            .password-toggle:hover {
+                color: var(--dark-brown);
+            }
+
+        .field-validation {
+            display: block;
+            margin-top: 5px;
+            font-size: 11px;
+            color: var(--danger);
+        }
+
+        /* =========================
+                   FORGOT PASSWORD
+                   ========================= */
+
+        .form-options {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: -5px;
+            margin-bottom: 24px;
+        }
+
+        .forgot-link {
+            color: var(--orange-dark);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: .2s ease;
+        }
+
+            .forgot-link:hover {
+                color: var(--dark-brown);
+                text-decoration: underline;
+            }
+
+        /* =========================
+                   LOGIN BUTTON
+                   ========================= */
+
+        .login-button {
+            width: 100%;
+            height: 51px;
+            border: none;
+            border-radius: 11px;
+            background: linear-gradient( 90deg, var(--soft-orange), #ffbf72 );
+            color: var(--dark-brown);
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            box-shadow: 0 8px 18px rgba(255,179,71,.22);
+            transition: all .2s ease;
+        }
+
+            .login-button:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 11px 24px rgba(255,179,71,.30);
+            }
+
+            .login-button:active {
+                transform: translateY(0);
+            }
+
+            .login-button.loading {
+                pointer-events: none;
+                opacity: .75;
+            }
+
+            .login-button .spinner {
+                display: none;
+                width: 15px;
+                height: 15px;
+                border: 2px solid rgba(93,64,55,.25);
+                border-top-color: var(--dark-brown);
+                border-radius: 50%;
+                animation: spin .7s linear infinite;
+            }
+
+            .login-button.loading .spinner {
+                display: block;
+            }
+
+            .login-button.loading .button-text {
+                display: none;
+            }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =========================
+                   FOOTER
+                   ========================= */
+
+        .login-footer {
+            text-align: center;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid #f0e8e1;
+        }
+
+            .login-footer p {
+                font-size: 11px;
+                color: #9a8980;
+            }
+
+            .login-footer strong {
+                color: var(--brown-light);
+                font-weight: 600;
+            }
+
+        /* =========================
+                   RESPONSIVE
+                   ========================= */
+
+        @@media (max-width: 850px) {
+
+            .login-container {
+                max-width: 520px;
+                min-height: auto;
+                grid-template-columns: 1fr;
+            }
+
+            .login-intro {
+                display: none;
+            }
+
+            .login-form-area {
+                padding: 50px 40px;
+            }
+
+            .mobile-logo {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 25px;
+            }
+
+                .mobile-logo img {
+                    width: 50px;
+                    height: 50px;
+                    object-fit: contain;
+                    background: transparent !important;
+                    padding: 0 !important;
+                    border-radius: 0 !important;
+                    box-shadow: none !important;
+                }
+        }
+
+        @@media (max-width: 480px) {
+
+            .login-page {
+                padding: 18px;
+            }
+
+            .login-container {
+                border-radius: 20px;
+            }
+
+            .login-form-area {
+                padding: 38px 24px;
+            }
+
+            .form-heading h2 {
+                font-size: 24px;
+            }
+
+            .login-footer {
+                margin-top: 24px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <main class="login-page">
+
+        <div class="login-container">
+
+            <!-- LEFT SIDE -->
+
+            <section class="login-intro">
+
+                <div class="intro-content">
+
+                    <img src="~/Images/logo.png"
+                         alt="Cloud Kitchen Logo"
+                         class="brand-logo" />
+
+                    <div class="intro-badge">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        Secure Admin Portal
+                    </div>
+
+                    <h1>
+                        Manage Your<br />
+                        Cloud Kitchen
+                    </h1>
+
+                    <p class="intro-text">
+                        Welcome to the Cloud Kitchen administration portal.
+                        Manage kitchens, users, orders and your platform
+                        operations from one place.
+                    </p>
+
+                    <div class="feature-list">
+
+                        <div class="feature">
+                            <span class="feature-icon">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </span>
+
+                            <span>
+                                Monitor your kitchen operations
+                            </span>
+                        </div>
+
+                        <div class="feature">
+                            <span class="feature-icon">
+                                <i class="fa-solid fa-store"></i>
+                            </span>
+
+                            <span>
+                                Manage kitchens and sellers
+                            </span>
+                        </div>
+
+                        <div class="feature">
+                            <span class="feature-icon">
+                                <i class="fa-solid fa-bag-shopping"></i>
+                            </span>
+
+                            <span>
+                                Track orders and platform activity
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- RIGHT SIDE -->
+
+            <section class="login-form-area">
+
+                <div class="login-card">
+
+                    <!-- MOBILE LOGO -->
+
+                    <div class="mobile-logo">
+
+                        <img src="~/Images/logo.png"
+                             alt="Cloud Kitchen Logo" />
+
+                    </div>
+
+
+                    <!-- HEADING -->
+
+                    <div class="form-heading">
+
+                        <h2>Admin Login</h2>
+
+                        <p>
+                            Sign in to access your administration dashboard.
+                        </p>
+
+                    </div>
+
+
+                    <!-- ERROR MESSAGE -->
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert-error">
+
+                            <i class="fa-solid fa-circle-exclamation"></i>
+
+                            <span>
+                                @ViewBag.Error
+                            </span>
+
+                        </div>
+                    }
+
+
+                    <!-- LOGIN FORM -->
+
+                    <form asp-controller="Admin"
+                          asp-action="Login"
+                          method="post"
+                          id="loginForm">
+
+                        @Html.AntiForgeryToken()
+
+
+                        <!-- USERNAME -->
+
+                        <div class="form-group">
+
+                            <label asp-for="Username"
+                                   class="form-label">
+                                Username
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <i class="fa-solid fa-user input-icon"></i>
+
+                                <input asp-for="Username"
+                                       class="form-control"
+                                       placeholder="Enter admin username"
+                                       autocomplete="username" />
+
+                            </div>
+
+                            <span asp-validation-for="Username"
+                                  class="field-validation">
+                            </span>
+
+                        </div>
+
+
+                        <!-- PASSWORD -->
+
+                        <div class="form-group">
+
+                            <label asp-for="Password"
+                                   class="form-label">
+                                Password
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <i class="fa-solid fa-lock input-icon"></i>
+
+                                <input asp-for="Password"
+                                       class="form-control"
+                                       id="passwordInput"
+                                       placeholder="Enter your password"
+                                       autocomplete="current-password" />
+
+                                <button type="button"
+                                        class="password-toggle"
+                                        id="togglePassword"
+                                        aria-label="Show password">
+
+                                    <i class="fa-solid fa-eye"></i>
+
+                                </button>
+
+                            </div>
+
+                            <span asp-validation-for="Password"
+                                  class="field-validation">
+                            </span>
+
+                        </div>
+
+
+                        <!-- FORGOT PASSWORD -->
+
+                        <div class="form-options">
+
+                            <a asp-controller="Admin"
+                               asp-action="ForgotPassword"
+                               class="forgot-link">
+
+                                Forgot Password?
+
+                            </a>
+
+                        </div>
+
+
+                        <!-- LOGIN BUTTON -->
+
+                        <button type="submit"
+                                class="login-button"
+                                id="loginButton">
+
+                            <span class="spinner"></span>
+
+                            <span class="button-text">
+
+                                <i class="fa-solid fa-right-to-bracket"></i>
+
+                                Login
+
+                            </span>
+
+                        </button>
+
+                    </form>
+
+
+                    <!-- FOOTER -->
+
+                    <div class="login-footer">
+
+                        <p>
+                            © 2026
+                            <strong>Cloud Kitchen Admin</strong>
+                            · Secure Administration Portal
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+
+    <script>
+
+        // ==============================
+        // SHOW / HIDE PASSWORD
+        // ==============================
+
+        const passwordInput =
+            document.getElementById("passwordInput");
+
+        const togglePassword =
+            document.getElementById("togglePassword");
+
+        if (togglePassword && passwordInput) {
+
+            togglePassword.addEventListener("click", function () {
+
+                const icon = this.querySelector("i");
+
+                if (passwordInput.type === "password") {
+
+                    passwordInput.type = "text";
+
+                    icon.classList.remove("fa-eye");
+                    icon.classList.add("fa-eye-slash");
+
+                    this.setAttribute(
+                        "aria-label",
+                        "Hide password"
+                    );
+
+                } else {
+
+                    passwordInput.type = "password";
+
+                    icon.classList.remove("fa-eye-slash");
+                    icon.classList.add("fa-eye");
+
+                    this.setAttribute(
+                        "aria-label",
+                        "Show password"
+                    );
+                }
+
+            });
+
+        }
+
+
+        // ==============================
+        // LOGIN LOADING EFFECT
+        // ==============================
+
+        const loginForm =
+            document.getElementById("loginForm");
+
+        const loginButton =
+            document.getElementById("loginButton");
+
+        if (loginForm && loginButton) {
+
+            loginForm.addEventListener("submit", function () {
+
+                if (loginForm.checkValidity()) {
+
+                    loginButton.classList.add("loading");
+
+                }
+
+            });
+
+        }
+
+    </script>
+
+</body>
+</html>

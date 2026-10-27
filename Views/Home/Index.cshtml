@@ -1,0 +1,450 @@
+@model KitchenPageViewModel
+
+@{
+    ViewData["Title"] = "Home";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<!-- =========================================================
+     HERO SECTION
+========================================================= -->
+
+<header class="hero">
+
+    <div class="hero-left">
+
+        <div class="eyebrow">
+            Homemade & Fresh
+        </div>
+
+        <h1>
+            Traditional
+            <span style="color:var(--orange)">
+                Desi Food
+            </span>
+            at Your Doorstep
+        </h1>
+
+        <p class="lead">
+            Freshly made with love — bringing the warmth
+            of home-cooked meals to your table.
+        </p>
+
+        <div class="cta-row">
+
+            <!-- ORDER NOW -->
+
+            <button type="button"
+                    class="btn btn-primary"
+                    id="orderNowBtn">
+
+                Order Now
+
+            </button>
+
+
+            <!-- SEE MENU -->
+
+            <button type="button"
+                    class="btn btn-outline"
+                    id="seeMenuBtn">
+
+                See Menu
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         HERO SLIDER
+    ====================================================== -->
+
+    <div class="hero-right">
+
+        <div class="slider-wrap"
+             id="sliderWrap">
+
+            <div class="slides"
+                 id="slides">
+
+                <div class="slide">
+
+                    <img src="~/images/Daal.jpg"
+                         alt="Daal">
+
+                </div>
+
+                <div class="slide">
+
+                    <img src="~/images/kheer.jpg"
+                         alt="Kheer">
+
+                </div>
+
+                <div class="slide">
+
+                    <img src="~/images/briyani.jpg"
+                         alt="Biryani">
+
+                </div>
+
+            </div>
+
+
+            <!-- SLIDER DOTS -->
+
+            <div class="pager"
+                 id="pager">
+            </div>
+
+
+            <!-- PREVIOUS -->
+
+            <button type="button"
+                    class="left-control"
+                    id="prevBtn"
+                    aria-label="Previous slide">
+
+                <i class="fas fa-chevron-left"></i>
+
+            </button>
+
+
+            <!-- NEXT -->
+
+            <button type="button"
+                    class="right-control"
+                    id="nextBtn"
+                    aria-label="Next slide">
+
+                <i class="fas fa-chevron-right"></i>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+
+<!-- =========================================================
+     TODAY'S DEALS
+     DATA COMES FROM SQL SERVER
+========================================================= -->
+
+<section class="deals-section"
+         id="todayDeals">
+
+    <div class="deals-head">
+
+        <h2>
+            Today's Deals
+        </h2>
+
+        <button type="button"
+                class="btn btn-outline"
+                id="viewAllBtn"
+                aria-expanded="false">
+
+            View All
+
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         DEALS GRID
+    ====================================================== -->
+
+    <div class="deals-grid"
+         id="dealsGrid">
+
+        @if (Model.Deals != null && Model.Deals.Any())
+        {
+            @foreach (var deal in Model.Deals)
+            {
+                <div class="deal-card"
+                     data-id="@deal.Id"
+                     data-title="@deal.Name"
+                     data-price="@deal.Price"
+                     data-img="@deal.Image"
+                     data-kitchen="@deal.KitchenName">
+
+
+                    <!-- =====================================
+                         DEAL IMAGE
+                    ====================================== -->
+                    @if (!string.IsNullOrWhiteSpace(deal.Image))
+                    {
+                        <img src="@Url.Content(deal.Image)"
+                             alt="@deal.Name">
+                    }
+                    else
+                    {
+                        <img src="~/images/default-food.jpg"
+                             alt="@deal.Name">
+                    }
+
+
+                    <!-- =====================================
+                         CARD BODY
+                    ====================================== -->
+
+                    <div class="card-body">
+
+                        <div>
+
+
+                            <!-- DEAL NAME -->
+
+                            <h3 class="title">
+                                @deal.Name
+                            </h3>
+
+
+                            <!-- DEAL DESCRIPTION -->
+
+                            <div>
+                                @deal.Description
+                            </div>
+
+
+                            <!-- KITCHEN NAME -->
+
+                            <small>
+                                From @deal.KitchenName
+                            </small>
+
+                        </div>
+
+
+                        <!-- =================================
+                             PRICE + ADD
+                        ================================== -->
+
+                        <div class="price-row">
+
+                            <span>
+                                Rs. @deal.Price.ToString("0")
+                            </span>
+
+
+                            <button type="button"
+                                    class="btn btn-primary add-btn"
+                                    data-id="@deal.Id"
+                                    data-title="@deal.Name"
+                                    data-price="@deal.Price"
+                                    data-img="@deal.Image"
+                                    data-kitchen="@deal.KitchenName">
+
+                                Add
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+        }
+        else
+        {
+            <!-- =============================================
+                 NO DEALS
+            ============================================== -->
+
+            <div class="no-deals">
+
+                <p>
+                    No deals are currently available.
+                </p>
+
+            </div>
+        }
+
+    </div>
+
+
+    <!-- =====================================================
+         EXPANDED DEALS
+         Kept for existing JavaScript functionality
+    ====================================================== -->
+
+    <div class="deals-expanded"
+         id="dealsExpanded"
+         aria-hidden="true">
+
+        <div class="expanded-grid"
+             id="expandedGrid">
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     CATEGORIES
+========================================================= -->
+
+<section class="categories">
+
+    <h2>
+        Browse by Category
+    </h2>
+
+
+        @if (Model.Categories != null && Model.Categories.Any())
+        {
+            @foreach (var cat in Model.Categories)
+            {
+                <div class="cat"
+                     data-cat="@cat.Name"
+                     role="button"
+                     tabindex="0">
+
+                    <img src="@cat.ImagePath"
+                         alt="@cat.Name">
+
+                    <p>
+                        @cat.Name
+                    </p>
+
+                </div>
+            }
+        }
+
+</section>
+
+
+
+<!-- =========================================================
+     WHY CHOOSE CLOUD KITCHEN
+========================================================= -->
+
+<section class="why-us">
+
+    <h2>
+        Why Choose Cloud Kitchen?
+    </h2>
+
+
+    <div class="why-grid">
+
+
+        <div class="why-card">
+
+            <i class="fas fa-heart"></i>
+
+            <p>
+                Homemade with Love
+            </p>
+
+        </div>
+
+
+        <div class="why-card">
+
+            <i class="fas fa-broom"></i>
+
+            <p>
+                Clean & Hygienic Kitchen
+            </p>
+
+        </div>
+
+
+        <div class="why-card">
+
+            <i class="fas fa-truck"></i>
+
+            <p>
+                Kitchen-Arranged Delivery
+            </p>
+
+        </div>
+
+
+        <div class="why-card">
+
+            <i class="fas fa-leaf"></i>
+
+            <p>
+                Healthy Ingredients
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     CUSTOMER REVIEWS
+========================================================= -->
+
+<section class="reviews">
+
+    <h2>
+        What Our Customers Say
+    </h2>
+
+
+    <div class="review-grid">
+
+
+        <div class="review">
+
+            <p>
+                "Best homemade food in town!
+                Reminds me of mom's cooking."
+            </p>
+
+            <strong>
+                - Ayesha
+            </strong>
+
+        </div>
+
+
+        <div class="review">
+
+            <p>
+                "Delivery always on time,
+                and food tastes fresh every time."
+            </p>
+
+            <strong>
+                - Ahmed
+            </strong>
+
+        </div>
+
+
+        <div class="review">
+
+            <p>
+                "Love the packaging and quality.
+                Highly recommended!"
+            </p>
+
+            <strong>
+                - Fatima
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>

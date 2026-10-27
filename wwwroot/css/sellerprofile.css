@@ -1,0 +1,171 @@
+﻿:root {
+    --soft-orange: #FFB347;
+    --beige: #F5E6CA;
+    --dark-brown: #5D4037;
+    --white: #FFF;
+    --card-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    --radius: 12px;
+    --muted: #6b6b6b
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins',sans-serif
+}
+
+body {
+    display: flex;
+    background: var(--beige);
+    min-height: 100vh;
+    color: #222
+}
+
+
+.main-content {
+    flex: 1;
+    padding: 100px 28px 32px 28px;
+    position: relative
+}
+
+.profile-header {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 18px
+}
+
+.avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+    .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover
+    }
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px
+}
+
+    .profile-info h2 {
+        color: var(--dark-brown)
+    }
+
+.muted {
+    color: var(--muted)
+}
+
+.card {
+    background: var(--white);
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px
+}
+
+    .form-row .col {
+        flex: 1
+    }
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted)
+}
+
+input[type='text'], input[type='email'], input[type='tel'], textarea, select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #e6dcc2;
+    background: var(--white)
+}
+
+textarea {
+    min-height: 90px
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px
+}
+
+.btn {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.btn-save {
+    background: var(--soft-orange);
+    color: var(--dark-brown)
+}
+
+.btn-edit {
+    background: var(--dark-brown);
+    color: #fff
+}
+
+.btn-cancel {
+    background: #aaa;
+    color: #fff
+}
+
+.small {
+    font-size: 0.95rem;
+    color: var(--muted)
+}
+
+.photo-input {
+    display: flex;
+    gap: 12px;
+    align-items: center
+}
+
+.img-preview {
+    width: 88px;
+    height: 88px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid #eee
+}
+
+@media(max-width:900px) {
+    .sidebar {
+        display: none
+    }
+
+    .main-content {
+        padding: 120px 12px
+    }
+
+    .form-row {
+        flex-direction: column
+    }
+
+    .profile-header {
+        flex-direction: column;
+        align-items: flex-start
+    }
+}

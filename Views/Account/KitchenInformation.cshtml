@@ -1,0 +1,961 @@
+@{
+    ViewData["Title"] = "Kitchen Information";
+    Layout = "~/Views/Shared/_SellCustLayout.cshtml";
+}
+
+<style>
+    html,
+    body {
+        height: auto !important;
+        min-height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    .page-wrapper {
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow: visible !important;
+    }
+
+    :root {
+        --soft-orange: #FFB347;
+        --beige: #F5E6CA;
+        --dark-brown: #5D4037;
+        --white: #FFFFFF;
+        --border: #dddddd;
+        --text-gray: #666666;
+    }
+
+    .kitchen-info-page * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+    }
+
+    .kitchen-info-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--beige), var(--soft-orange));
+        padding: 30px 10px;
+    }
+
+        .kitchen-info-page .signup-card {
+            width: 100%;
+            max-width: 760px;
+            margin: auto;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+            padding: 38px 40px;
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .kitchen-info-page h2 {
+        color: var(--dark-brown);
+        font-size: 1.55rem;
+        text-align: center;
+        margin-bottom: 7px;
+    }
+
+    .kitchen-info-page .subtitle {
+        color: var(--text-gray);
+        font-size: 0.9rem;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    /* Progress */
+
+    .kitchen-info-page .progress-wrapper {
+        margin-bottom: 28px;
+    }
+
+    .kitchen-info-page .progress-steps {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .kitchen-info-page .step {
+        display: flex;
+        align-items: center;
+    }
+
+    .kitchen-info-page .step-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--dark-brown);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+        .kitchen-info-page .step-circle.active {
+            background: var(--soft-orange);
+            color: var(--dark-brown);
+        }
+
+    .kitchen-info-page .step-text {
+        font-size: 0.72rem;
+        color: var(--dark-brown);
+        margin-left: 7px;
+        font-weight: 600;
+    }
+
+    .kitchen-info-page .progress-line {
+        width: 70px;
+        height: 2px;
+        background: #ddd;
+        margin: 0 10px;
+    }
+
+    /* Information Box */
+
+    .kitchen-info-page .info-box {
+        background: #fff8ed;
+        border-left: 4px solid var(--soft-orange);
+        border-radius: 8px;
+        padding: 13px 15px;
+        margin-bottom: 25px;
+    }
+
+        .kitchen-info-page .info-box strong {
+            display: block;
+            color: var(--dark-brown);
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .kitchen-info-page .info-box span {
+            color: var(--text-gray);
+            font-size: 0.77rem;
+            line-height: 1.5;
+        }
+
+    /* Section */
+
+    .kitchen-info-page .section-title {
+        color: var(--dark-brown);
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 25px 0 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #eeeeee;
+    }
+
+    /* Form */
+
+    .kitchen-info-page .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+
+    .kitchen-info-page .form-group {
+        margin-bottom: 16px;
+    }
+
+    .kitchen-info-page label {
+        display: block;
+        text-align: left;
+        color: var(--dark-brown);
+        font-weight: 600;
+        font-size: 0.87rem;
+        margin-bottom: 7px;
+    }
+
+    .kitchen-info-page .required {
+        color: #d9534f;
+    }
+
+    .kitchen-info-page input,
+    .kitchen-info-page select,
+    .kitchen-info-page textarea {
+        width: 100%;
+        padding: 12px 13px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--white);
+        font-size: 0.9rem;
+        outline: none;
+        transition: 0.2s;
+    }
+
+        .kitchen-info-page input:focus,
+        .kitchen-info-page select:focus,
+        .kitchen-info-page textarea:focus {
+            border-color: var(--soft-orange);
+            box-shadow: 0 0 6px rgba(255, 179, 71, 0.35);
+        }
+
+        .kitchen-info-page input::placeholder,
+        .kitchen-info-page textarea::placeholder {
+            color: #aaa;
+        }
+
+    .kitchen-info-page textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .kitchen-info-page .field-note {
+        font-size: 0.72rem;
+        color: #888;
+        margin-top: 5px;
+        line-height: 1.5;
+    }
+
+    /* Cuisine */
+
+    .kitchen-info-page .cuisine-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .kitchen-info-page .cuisine-option {
+        position: relative;
+    }
+
+        .kitchen-info-page .cuisine-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .kitchen-info-page .cuisine-option label {
+            display: block;
+            padding: 10px 8px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--dark-brown);
+            transition: 0.2s;
+        }
+
+        .kitchen-info-page .cuisine-option input:checked + label {
+            border-color: var(--soft-orange);
+            background: #fff8ed;
+            font-weight: 600;
+        }
+
+    /* Delivery Rate */
+
+    .kitchen-info-page .rate-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .kitchen-info-page .rate-box input {
+            flex: 1;
+        }
+
+    .kitchen-info-page .rate-unit {
+        white-space: nowrap;
+        color: var(--dark-brown);
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    /* Image */
+
+    .kitchen-info-page .image-upload {
+        border: 2px dashed #ddd;
+        border-radius: 10px;
+        padding: 25px 15px;
+        text-align: center;
+        background: #fafafa;
+    }
+
+    .kitchen-info-page .upload-icon {
+        font-size: 30px;
+        margin-bottom: 8px;
+    }
+
+    .kitchen-info-page .image-upload p {
+        color: var(--text-gray);
+        font-size: 0.78rem;
+        margin-bottom: 10px;
+    }
+
+    .kitchen-info-page .image-upload input {
+        border: none;
+        padding: 5px;
+        background: transparent;
+    }
+
+    /* Terms */
+
+    .kitchen-info-page .terms {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin: 22px 0;
+        text-align: left;
+    }
+
+        .kitchen-info-page .terms input {
+            width: 16px;
+            height: 16px;
+            margin-top: 2px;
+            accent-color: var(--soft-orange);
+        }
+
+        .kitchen-info-page .terms label {
+            margin: 0;
+            font-size: 0.76rem;
+            font-weight: 400;
+            color: #666;
+            line-height: 1.45;
+        }
+
+    /* Button */
+
+    .kitchen-info-page button {
+        width: 100%;
+        padding: 13px;
+        background: var(--dark-brown);
+        color: var(--white);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.98rem;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        .kitchen-info-page button:hover {
+            background: var(--soft-orange);
+            color: var(--dark-brown);
+        }
+
+    /* Approval */
+
+    .kitchen-info-page .approval-note {
+        margin-top: 18px;
+        padding-top: 15px;
+        border-top: 1px solid #eeeeee;
+        text-align: center;
+        color: #888;
+        font-size: 0.74rem;
+        line-height: 1.5;
+    }
+
+    /* Validation */
+
+    .kitchen-info-page .validation-summary {
+        margin-bottom: 18px;
+        padding: 12px;
+        border-radius: 8px;
+        background: #fff0f0;
+        color: #a94442;
+        font-size: 0.82rem;
+    }
+
+    /* Responsive */
+
+    @@media (max-width: 650px) {
+        .kitchen-info-page .signup-card {
+            padding: 30px 22px;
+        }
+
+        .kitchen-info-page .form-row {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        .kitchen-info-page .cuisine-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .kitchen-info-page .progress-line {
+            width: 30px;
+        }
+    }
+
+    @@media (max-width: 400px) {
+        .kitchen-info-page .step-text {
+            display: none;
+        }
+
+        .kitchen-info-page .progress-line {
+            width: 20px;
+        }
+    }
+</style>
+
+
+<div class="kitchen-info-page">
+
+    <div class="signup-card">
+
+        <h2>Complete Your Kitchen Profile</h2>
+
+        <p class="subtitle">
+            Tell customers about your kitchen and what you offer
+        </p>
+
+
+        <!-- Progress -->
+
+        <div class="progress-wrapper">
+
+            <div class="progress-steps">
+
+                <div class="step">
+                    <div class="step-circle">1</div>
+                    <span class="step-text">Account</span>
+                </div>
+
+                <div class="progress-line"></div>
+
+                <div class="step">
+                    <div class="step-circle active">2</div>
+                    <span class="step-text">Kitchen</span>
+                </div>
+
+                <div class="progress-line"></div>
+
+                <div class="step">
+                    <div class="step-circle">3</div>
+                    <span class="step-text">Approval</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Information -->
+
+        <div class="info-box">
+
+            <strong>Kitchen Registration</strong>
+
+            <span>
+                Please provide accurate information about your kitchen.
+                After submission, your kitchen profile will be reviewed
+                by the Cloud Kitchen admin.
+            </span>
+
+        </div>
+
+
+        <!-- FORM -->
+
+        <form id="kitchenForm"
+              asp-controller="Account"
+              asp-action="SellerKitchenProfile"
+              method="post"
+              enctype="multipart/form-data">
+
+            @Html.AntiForgeryToken()
+
+
+            <!-- Validation Summary -->
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="validation-summary">
+                    <div asp-validation-summary="All"></div>
+                </div>
+            }
+
+
+            <!-- =====================================================
+                 KITCHEN INFORMATION
+                 ===================================================== -->
+
+            <div class="section-title">
+                Kitchen Information
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="kitchenName">
+                        Kitchen Name
+                        <span class="required">*</span>
+                    </label>
+
+                    <input type="text"
+                           id="kitchenName"
+                           name="kitchenName"
+                           placeholder="e.g. Amna's Kitchen"
+                           maxlength="200"
+                           required />
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="kitchenPhone">
+                        Kitchen Phone
+                        <span class="required">*</span>
+                    </label>
+
+                    <input type="tel"
+                           id="kitchenPhone"
+                           name="kitchenPhone"
+                           placeholder="03XX-XXXXXXX"
+                           maxlength="50"
+                           required />
+
+                </div>
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="form-group">
+
+                <label for="description">
+                    Kitchen Description
+                    <span class="required">*</span>
+                </label>
+
+                <textarea id="description"
+                          name="description"
+                          maxlength="1000"
+                          placeholder="Tell customers about your kitchen, specialties and homemade food..."
+                          required></textarea>
+
+            </div>
+
+
+            <!-- =====================================================
+                 CUISINE
+                 ===================================================== -->
+
+            <div class="section-title">
+                Food &amp; Cuisine
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Select Your Food Categories
+                    <span class="required">*</span>
+                </label>
+
+
+                <div class="cuisine-grid">
+
+                    <div class="cuisine-option">
+
+                        <input type="checkbox"
+                               id="desifood"
+                               name="cuisine"
+                               value="Desi Food" />
+
+                        <label for="desifood">
+                            Desi Food
+                        </label>
+
+                    </div>
+
+
+                    <div class="cuisine-option">
+
+                        <input type="checkbox"
+                               id="bbq"
+                               name="cuisine"
+                               value="BBQ" />
+
+                        <label for="bbq">
+                            BBQ
+                        </label>
+
+                    </div>
+
+
+                    <div class="cuisine-option">
+
+                        <input type="checkbox"
+                               id="fastfood"
+                               name="cuisine"
+                               value="Fast Food" />
+
+                        <label for="fastfood">
+                            Fast Food
+                        </label>
+
+                    </div>
+
+
+                    <div class="cuisine-option">
+
+                        <input type="checkbox"
+                               id="desserts"
+                               name="cuisine"
+                               value="Desserts" />
+
+                        <label for="desserts">
+                            Desserts
+                        </label>
+
+                    </div>
+
+
+                    <div class="cuisine-option">
+
+                        <input type="checkbox"
+                               id="bakery"
+                               name="cuisine"
+                               value="Bakery" />
+
+                        <label for="bakery">
+                            Bakery
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 LOCATION
+                 ===================================================== -->
+
+            <div class="section-title">
+                Kitchen Location
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="city">
+                        City
+                        <span class="required">*</span>
+                    </label>
+
+                    <select id="city"
+                            name="city"
+                            required>
+
+                        <option value="">
+                            Select City
+                        </option>
+
+                        <option value="Rawalpindi">
+                            Rawalpindi
+                        </option>
+
+                        <option value="Islamabad">
+                            Islamabad
+                        </option>
+
+                        <option value="Lahore">
+                            Lahore
+                        </option>
+
+                        <option value="Karachi">
+                            Karachi
+                        </option>
+
+                        <option value="Peshawar">
+                            Peshawar
+                        </option>
+
+                        <option value="Faisalabad">
+                            Faisalabad
+                        </option>
+
+                        <option value="Multan">
+                            Multan
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="area">
+                        Area / Locality
+                        <span class="required">*</span>
+                    </label>
+
+                    <input type="text"
+                           id="area"
+                           name="area"
+                           maxlength="200"
+                           placeholder="e.g. Saddar"
+                           required />
+
+                </div>
+
+            </div>
+
+
+            <!-- ADDRESS -->
+
+            <div class="form-group">
+
+                <label for="address">
+                    Complete Kitchen Address
+                    <span class="required">*</span>
+                </label>
+
+                <textarea id="address"
+                          name="address"
+                          maxlength="500"
+                          placeholder="House / Street / Block / Area..."
+                          required></textarea>
+
+            </div>
+
+
+            <!-- =====================================================
+                 OPERATING HOURS
+                 ===================================================== -->
+
+            <div class="section-title">
+                Kitchen Operating Hours
+            </div>
+
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="openingTime">
+                        Opening Time
+                        <span class="required">*</span>
+                    </label>
+
+                    <input type="time"
+                           id="openingTime"
+                           name="openingTime"
+                           required />
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="closingTime">
+                        Closing Time
+                        <span class="required">*</span>
+                    </label>
+
+                    <input type="time"
+                           id="closingTime"
+                           name="closingTime"
+                           required />
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 DELIVERY INFORMATION
+                 ===================================================== -->
+
+            <div class="section-title">
+                Delivery Information
+            </div>
+
+
+            <!-- DELIVERY NOTE -->
+
+            <div class="info-box">
+
+                <strong>Seller Managed Delivery</strong>
+
+                <span>
+                    Cloud Kitchen does not provide rider or delivery
+                    services. Sellers are responsible for managing
+                    their own delivery arrangements.
+                </span>
+
+            </div>
+
+
+            <!-- DELIVERY RATE -->
+
+            <div class="form-group">
+
+                <label for="deliveryRatePerKm">
+                    Delivery Rate Per KM
+                    <span class="required">*</span>
+                </label>
+
+
+                <div class="rate-box">
+
+                    <input type="number"
+                           id="deliveryRatePerKm"
+                           name="deliveryRatePerKm"
+                           min="0"
+                           step="1"
+                           placeholder="e.g. 30"
+                           required />
+
+                    <span class="rate-unit">
+                        PKR / KM
+                    </span>
+
+                </div>
+
+
+                <div class="field-note">
+                    Delivery charges will be calculated according to
+                    the distance between the kitchen and customer's
+                    delivery location.
+                </div>
+
+            </div>
+
+
+            <!-- DELIVERY AREAS -->
+
+            <div class="form-group">
+
+                <label for="deliveryAreas">
+                    Delivery Areas
+                    <span class="required">*</span>
+                </label>
+
+                <input type="text"
+                       id="deliveryAreas"
+                       name="deliveryAreas"
+                       maxlength="1000"
+                       placeholder="e.g. Saddar, Satellite Town, Chaklala"
+                       required />
+
+                <div class="field-note">
+                    Enter the areas where your kitchen provides
+                    delivery. Separate multiple areas with commas.
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 KITCHEN IMAGE
+                 ===================================================== -->
+
+            <div class="section-title">
+                Kitchen Image
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="kitchenImage">
+                    Upload Kitchen Image
+                </label>
+
+
+                <div class="image-upload">
+
+                    <p>
+                        Add a clear photo of your kitchen
+                    </p>
+
+                    <input type="file"
+                           id="kitchenImage"
+                           name="kitchenImage"
+                           accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+
+                </div>
+
+
+                <div class="field-note">
+                    Allowed formats: JPG, JPEG, PNG and WEBP.
+                    Maximum size: 5 MB.
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 AGREEMENT
+                 ===================================================== -->
+
+            <div class="terms">
+
+                <input type="checkbox"
+                        id="agreement"
+                       name="agreement"
+                       value="true"
+                       required />
+
+                <label for="agreement">
+
+                    I confirm that the information provided is accurate
+                    and I understand that my kitchen profile will be
+                    reviewed by the Cloud Kitchen admin before approval.
+
+                </label>
+
+            </div>
+
+
+            <!-- =====================================================
+                 SUBMIT
+                 ===================================================== -->
+
+            <button type="submit">
+                Submit Kitchen for Approval
+            </button>
+
+
+        </form>
+
+
+        <!-- =========================================================
+             APPROVAL NOTE
+             ========================================================= -->
+
+        <div class="approval-note">
+
+            After submission, your kitchen will be marked as
+            <strong>Pending Approval</strong>.
+
+            Seller Dashboard access will be available after
+            admin approval.
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<script src="~/js/kitchen_information.js"
+        asp-append-version="true">
+</script>

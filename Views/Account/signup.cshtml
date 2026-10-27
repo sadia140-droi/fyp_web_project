@@ -1,0 +1,29 @@
+﻿@{
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="signup-container">
+    <h2>Create Your Account</h2>
+    <p>Choose how you want to sign up:</p>
+
+    <!-- OPTION 1 : SELLER -->
+    <div class="signup-option"
+         onclick="location.href='@Url.Action("SellerSignup", "Account")'">
+        <h3>Sign Up to Create a Kitchen</h3>
+        <p>Join as a seller to share your homemade food with customers.</p>
+    </div>
+
+    <!-- OPTION 2 : CUSTOMER -->
+    <div class="signup-option"
+         onclick="location.href='@Url.Action("CustomerSignup", "Account")'">
+        <h3>Sign Up as Customer</h3>
+        <p>Order fresh, homemade food delivered to your doorstep.</p>
+    </div>
+
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="signup-link"
+       style="color:var(--soft-orange);">
+        ← Back to Home
+    </a>
+</div>

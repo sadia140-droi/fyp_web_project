@@ -1,0 +1,549 @@
+@model Cloud_Kitchen_web_App.Models.OrderStatusViewModel?
+
+@{
+    var orderId = Model?.OrderId ?? 1001;
+    ViewData["Title"] = $"Track Order #{orderId}";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+
+    var status = string.IsNullOrWhiteSpace(Model?.Status)
+        ? "Cancelled"
+        : Model.Status.Trim();
+
+    var normalizedStatus = status.ToLowerInvariant();
+
+    bool isCancelled =
+        normalizedStatus == "cancelled" ||
+        normalizedStatus == "canceled" ||
+        normalizedStatus == "order cancelled";
+
+    int currentStep = normalizedStatus switch
+    {
+        "placed" or "order placed" or "new" => 0,
+        "accepted" or "order accepted" => 1,
+        "preparing" or "kitchen preparing" => 2,
+        "ready" or "order ready" or "food ready" => 3,
+        "out for delivery" or "dispatched" => 4,
+        "delivered" or "order delivered" or "completed" => 5,
+        _ => 0
+    };
+
+    string displayStatus = isCancelled
+        ? "Order Cancelled"
+        : normalizedStatus switch
+        {
+            "placed" or "order placed" or "new" => "Order Placed",
+            "accepted" or "order accepted" => "Order Accepted",
+            "preparing" or "kitchen preparing" => "Kitchen Preparing",
+            "ready" or "order ready" or "food ready" => "Food Ready",
+            "out for delivery" or "dispatched" => "Out for Delivery",
+            "delivered" or "order delivered" or "completed" => "Order Delivered",
+            _ => "Order Placed"
+        };
+
+    string deadlineIso = Model?.CancellationDeadline?.ToString("yyyy-MM-ddTHH:mm:ssZ") ?? "";
+    bool justCancelled = TempData["OrderCancelled"] != null;
+    string kitchenName = string.IsNullOrWhiteSpace(Model?.KitchenName) ? "Home Kitchen" : Model.KitchenName;
+    bool canCancel = Model?.CanCancel ?? false;
+}
+
+@section Styles {
+    <style>
+        :root {
+            --soft-orange: #FFB347;
+            --dark-brown: #3d2314;
+            --muted-text: #7c746e;
+            --border-dashed: #f6b343;
+            --card-bg: #ffffff;
+            --banner-bg: #fffcf4;
+            --line-color: #e5e5e5;
+            --circle-gray: #d0d0d0;
+            --success-green: #27ae60;
+            --danger-red: #dc3545;
+        }
+
+        body {
+            background-color: #faf7f2;
+        }
+
+        .tracking-wrapper {
+            max-width: 680px;
+            margin: 40px auto 70px;
+            padding: 0 16px;
+        }
+
+        .tracking-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 42px 48px;
+            box-shadow: 0 10px 40px rgba(61, 35, 20, 0.06);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .tracking-title {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--dark-brown);
+            margin-bottom: 6px;
+        }
+
+        .tracking-subtitle {
+            font-size: 0.95rem;
+            color: var(--muted-text);
+            margin-bottom: 28px;
+        }
+
+        /* ===== INFO BOX (DASHED BORDER) ===== */
+        .order-info-card {
+            background: var(--banner-bg);
+            border: 1.5px dashed var(--border-dashed);
+            border-radius: 16px;
+            padding: 22px 28px;
+            margin-bottom: 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .info-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #8a827d;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .info-val {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--dark-brown);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .status-badge.cancelled {
+            background: #d9534f;
+            color: #ffffff;
+        }
+
+        .status-badge.placed {
+            background: #ececec;
+            color: #555555;
+        }
+
+        .status-badge.accepted,
+        .status-badge.preparing {
+            background: #fff3d9;
+            color: #b45b00;
+        }
+
+        .status-badge.ready {
+            background: #ede9fe;
+            color: #6b21a8;
+        }
+
+        .status-badge.delivery {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-badge.delivered {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* ===== VERTICAL TIMELINE ===== */
+        .vertical-timeline {
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 30px;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 9px;
+            top: 14px;
+            bottom: 20px;
+            width: 2px;
+            background: var(--line-color);
+        }
+
+        .timeline-step {
+            position: relative;
+            padding-bottom: 32px;
+        }
+
+        .timeline-step:last-child {
+            padding-bottom: 5px;
+        }
+
+        .step-node {
+            position: absolute;
+            left: -36px;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2.5px solid var(--circle-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        /* Completed Step */
+        .timeline-step.completed .step-node {
+            border-color: var(--success-green);
+            background: var(--success-green);
+        }
+
+        .timeline-step.completed .step-node::after {
+            content: "✓";
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        /* Active Step (In Progress) */
+        .timeline-step.active .step-node {
+            border-color: var(--soft-orange);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(255, 179, 71, 0.25);
+        }
+
+        .timeline-step.active .step-node::after {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--soft-orange);
+        }
+
+        /* Cancelled Step */
+        .timeline-step.cancelled .step-node {
+            border-color: #dc3545;
+            background: #dc3545;
+            box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.2);
+        }
+
+        .step-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .step-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--dark-brown);
+        }
+
+        .timeline-step.cancelled .step-title {
+            color: #dc3545;
+        }
+
+        .step-desc {
+            font-size: 0.88rem;
+            color: #847e78;
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+
+        /* ===== CANCELLATION AREA ===== */
+        .cancel-section {
+            margin-top: 20px;
+            border-top: 1px solid #f0ece6;
+            padding-top: 24px;
+        }
+
+        .cancel-notice-text {
+            font-size: 0.88rem;
+            color: #777;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cancel-btn-disabled {
+            width: 100%;
+            background: #f4f5f7;
+            border: 1px solid #e2e4e8;
+            color: #7b828e;
+            border-radius: 12px;
+            padding: 13px 18px;
+            font-weight: 700;
+            font-size: 0.96rem;
+            cursor: not-allowed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .cancel-btn-active {
+            width: 100%;
+            background: #ffffff;
+            border: 2px solid #dc3545;
+            color: #dc3545;
+            border-radius: 12px;
+            padding: 13px 18px;
+            font-weight: 700;
+            font-size: 0.96rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .cancel-btn-active:hover {
+            background: #dc3545;
+            color: #ffffff;
+        }
+
+        .cancel-success-banner {
+            background: #fff1f0;
+            border: 1px solid #ffd8d6;
+            color: #dc3545;
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        @@media (max-width: 600px) {
+            .tracking-card {
+                padding: 24px 20px;
+            }
+            .order-info-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+        }
+    </style>
+}
+
+<div class="tracking-wrapper">
+
+    <div class="tracking-card">
+
+        <!-- HEADER -->
+        <h2 class="tracking-title">Track Your Order</h2>
+        <p class="tracking-subtitle">Follow your order status from the kitchen</p>
+
+        <!-- DASHED ORDER INFO BANNER -->
+        <div class="order-info-card">
+            <div class="info-col">
+                <span class="info-label">Order ID</span>
+                <span class="info-val">#@orderId</span>
+            </div>
+
+            <div class="info-col">
+                <span class="info-label">From Kitchen</span>
+                <span class="info-val">@kitchenName</span>
+            </div>
+
+            <div class="info-col">
+                <span class="info-label">Current Status</span>
+                <span class="status-badge @(isCancelled ? "cancelled" : currentStep == 0 ? "placed" : currentStep == 1 ? "accepted" : currentStep == 2 ? "preparing" : currentStep == 3 ? "ready" : currentStep == 4 ? "delivery" : "delivered")">
+                    @displayStatus
+                </span>
+            </div>
+        </div>
+
+        <!-- VERTICAL TIMELINE -->
+        <div class="vertical-timeline">
+            <div class="timeline-line"></div>
+
+            <!-- STEP 1: ORDER PLACED -->
+            <div class="timeline-step @(isCancelled ? "" : (currentStep > 0 ? "completed" : currentStep == 0 ? "active" : ""))">
+                <div class="step-node"></div>
+                <div class="step-content">
+                    <span class="step-title">Order Placed</span>
+                    <span class="step-desc">Your order has been sent to the kitchen.</span>
+                </div>
+            </div>
+
+            <!-- STEP 2: ORDER ACCEPTED -->
+            <div class="timeline-step @(isCancelled ? "" : (currentStep > 1 ? "completed" : currentStep == 1 ? "active" : ""))">
+                <div class="step-node"></div>
+                <div class="step-content">
+                    <span class="step-title">Order Accepted</span>
+                    <span class="step-desc">The kitchen owner has accepted your order.</span>
+                </div>
+            </div>
+
+            <!-- STEP 3: KITCHEN PREPARING -->
+            <div class="timeline-step @(isCancelled ? "" : (currentStep > 2 ? "completed" : currentStep == 2 ? "active" : ""))">
+                <div class="step-node"></div>
+                <div class="step-content">
+                    <span class="step-title">Kitchen Preparing</span>
+                    <span class="step-desc">Your fresh homemade meal is being prepared.</span>
+                </div>
+            </div>
+
+            <!-- STEP 4: FOOD READY -->
+            <div class="timeline-step @(isCancelled ? "" : (currentStep > 3 ? "completed" : currentStep == 3 ? "active" : ""))">
+                <div class="step-node"></div>
+                <div class="step-content">
+                    <span class="step-title">Food Ready</span>
+                    <span class="step-desc">Your order is freshly prepared and ready for dispatch.</span>
+                </div>
+            </div>
+
+            <!-- STEP 5: OUT FOR DELIVERY -->
+            <div class="timeline-step @(isCancelled ? "" : (currentStep > 4 ? "completed" : currentStep == 4 ? "active" : ""))">
+                <div class="step-node"></div>
+                <div class="step-content">
+                    <span class="step-title">Out for Delivery</span>
+                    <span class="step-desc">The kitchen's delivery person is bringing your order to your address.</span>
+                </div>
+            </div>
+
+            <!-- STEP 6: ORDER DELIVERED -->
+            <div class="timeline-step @(isCancelled ? "" : (currentStep == 5 ? "completed active" : ""))">
+                <div class="step-node"></div>
+                <div class="step-content">
+                    <span class="step-title">Order Delivered</span>
+                    <span class="step-desc">Your order has been delivered. Enjoy your meal!</span>
+                </div>
+            </div>
+
+            @if (isCancelled)
+            {
+                <!-- STEP 7: ORDER CANCELLED (DISPLAYED WHEN CANCELLED) -->
+                <div class="timeline-step cancelled">
+                    <div class="step-node"></div>
+                    <div class="step-content">
+                        <span class="step-title">Order Cancelled</span>
+                        <span class="step-desc">This order has been cancelled.</span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- CANCELLATION AREA -->
+        <div class="cancel-section">
+            @if (isCancelled)
+            {
+                <!-- Notice line -->
+                <div class="cancel-notice-text">
+                    <i class="fas fa-info-circle"></i> This order has already been cancelled.
+                </div>
+
+                <!-- Disabled grey button -->
+                <button type="button" class="cancel-btn-disabled" disabled>
+                    <i class="fas fa-ban"></i> Order Cancelled
+                </button>
+
+                <!-- Feedback alert banner -->
+                <div class="cancel-success-banner">
+                    <i class="fas fa-ban"></i> This order has been cancelled successfully.
+                </div>
+            }
+            else if (canCancel)
+            {
+                <div class="cancel-notice-text" id="cancelNotice">
+                    <i class="far fa-clock"></i> <span id="cancelTimer">Calculating cancellation window...</span>
+                </div>
+
+                <form id="cancelOrderForm" asp-controller="Customer" asp-action="CancelOrder" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderId" value="@orderId" />
+                    <button type="button" class="cancel-btn-active" id="cancelOrderBtn" onclick="confirmCancel()">
+                        <i class="fas fa-ban"></i> Cancel Order
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="cancel-notice-text">
+                    <i class="fas fa-info-circle"></i> Cancellation is only available within 5 minutes of kitchen acceptance.
+                </div>
+            }
+        </div>
+
+        <div style="text-align: center; margin-top: 28px;">
+            <a href="/Customer/OrderHistory" style="color: var(--muted-text); text-decoration: none; font-size: 0.9rem; font-weight: 600;">
+                <i class="fas fa-arrow-left me-1"></i> Back to Order History
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        function confirmCancel() {
+            if (confirm('Are you sure you want to cancel order #@orderId?')) {
+                const btn = document.getElementById('cancelOrderBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+                }
+                document.getElementById('cancelOrderForm').submit();
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            var deadlineIso = "@deadlineIso";
+            var isCancelled = @(isCancelled ? "true" : "false");
+            if (isCancelled || !deadlineIso) return;
+
+            var deadline = new Date(deadlineIso).getTime();
+            var timerEl = document.getElementById("cancelTimer");
+            var cancelBtn = document.getElementById("cancelOrderBtn");
+            var noticeEl = document.getElementById("cancelNotice");
+
+            function updateTimer() {
+                var now = new Date().getTime();
+                var remaining = deadline - now;
+
+                if (remaining <= 0) {
+                    if (timerEl) timerEl.innerText = "Cancellation window has closed";
+                    if (cancelBtn) {
+                        cancelBtn.disabled = true;
+                        cancelBtn.className = "cancel-btn-disabled";
+                        cancelBtn.innerHTML = '<i class="fas fa-lock"></i> Cancellation Window Closed';
+                    }
+                    clearInterval(timerInterval);
+                    return;
+                }
+
+                var totalSeconds = Math.floor(remaining / 1000);
+                var minutes = Math.floor(totalSeconds / 60);
+                var seconds = totalSeconds % 60;
+                var minStr = minutes < 10 ? "0" + minutes : minutes;
+                var secStr = seconds < 10 ? "0" + seconds : seconds;
+
+                if (timerEl) {
+                    timerEl.innerText = "Cancel available for " + minStr + ":" + secStr;
+                }
+            }
+
+            updateTimer();
+            var timerInterval = setInterval(updateTimer, 1000);
+        });
+    </script>
+}

@@ -1,0 +1,180 @@
+﻿:root {
+    --soft-orange: #FFB347;
+    --beige: #F5E6CA;
+    --dark-brown: #5D4037;
+    --white: #FFF;
+    --card-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    --radius: 12px;
+    --muted: #6b6b6b
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins',sans-serif
+}
+
+body {
+    display: flex;
+    background: var(--beige);
+    min-height: 100vh;
+    color: #222
+}
+
+
+.main-content {
+    flex: 1;
+    padding: 100px 28px 32px 28px;
+    position: relative
+}
+
+.profile-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px
+}
+
+    .profile-box img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover
+    }
+
+    .profile-box .meta {
+        display: flex;
+        flex-direction: column
+    }
+
+        .profile-box .meta .name {
+            font-weight: 700;
+            color: var(--dark-brown)
+        }
+
+.card {
+    background: var(--white);
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 16px
+}
+
+.section-title {
+    color: var(--dark-brown);
+    margin-bottom: 8px;
+    font-weight: 700
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted)
+}
+
+input[type='text'], input[type='time'], input[type='password'], select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #e6dcc2;
+    background: var(--white);
+    margin-bottom: 8px
+}
+
+.row {
+    display: flex;
+    gap: 12px
+}
+
+.col {
+    flex: 1
+}
+
+.toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px
+}
+
+    .toggle input {
+        width: 40px;
+        height: 22px;
+        appearance: none;
+        background: #ddd;
+        border-radius: 999px;
+        position: relative;
+        cursor: pointer;
+        outline: none
+    }
+
+        .toggle input:checked {
+            background: var(--soft-orange)
+        }
+
+        .toggle input::after {
+            content: '';
+            width: 18px;
+            height: 18px;
+            background: #fff;
+            border-radius: 50%;
+            position: relative;
+            left: 2px;
+            transition: 0.18s
+        }
+
+        .toggle input:checked::after {
+            transform: translateX(18px)
+        }
+
+.small {
+    font-size: 0.95rem;
+    color: var(--muted)
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px
+}
+
+.btn {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.btn-save {
+    background: var(--soft-orange);
+    color: var(--dark-brown)
+}
+
+.btn-cancel {
+    background: #aaa;
+    color: #fff
+}
+
+.danger {
+    background: #e74c3c;
+    color: #fff
+}
+
+@media(max-width:900px) {
+    .sidebar {
+        display: none
+    }
+
+    .main-content {
+        padding: 120px 12px
+    }
+
+    .row {
+        flex-direction: column
+    }
+}

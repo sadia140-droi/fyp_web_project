@@ -1,0 +1,517 @@
+@model Cloud_Kitchen_web_App.Models.SettingViewModel
+@{
+    ViewData["Title"] = "Customer Settings";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+<div class="customer-settings-page">
+    <div class="settings-header">
+        <h2>
+            <i class="fas fa-cog"></i>
+            Settings
+        </h2>
+        <p>Manage your account, preferences and security.</p>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert" style="max-width: 900px; margin: auto;">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="max-width: 900px; margin: auto;">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="settings-accordion">
+        
+        <!-- Profile Information -->
+        <div class="accordion-item" id="profile-accordion">
+            <div class="accordion-header" onclick="toggleAccordion('profile-accordion')">
+                <div class="accordion-icon-box">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="accordion-title-box">
+                    <h3>Profile Information</h3>
+                    <p>Manage your personal account information.</p>
+                </div>
+                <div class="accordion-chevron">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-body">
+                <form asp-action="Profile" asp-controller="Customer" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Full Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="Enter your full name" value="@ViewBag.CustomerName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Phone Number</label>
+                            <input type="text" name="phone" class="form-control" placeholder="Enter your phone number" value="@ViewBag.CustomerPhone">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">Delivery Address</label>
+                            <textarea name="address" class="form-control" rows="3" placeholder="Enter your delivery address">@ViewBag.CustomerAddress</textarea>
+                        </div>
+                    </div>
+                    <div class="text-end mt-2">
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="accordion-item" id="notifications-accordion">
+            <div class="accordion-header" onclick="toggleAccordion('notifications-accordion')">
+                <div class="accordion-icon-box" style="color: #F6A035; background: #FFF4E5;">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="accordion-title-box">
+                    <h3>Notifications</h3>
+                    <p>Control how you receive notifications.</p>
+                </div>
+                <div class="accordion-chevron">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-body">
+                <form asp-action="Settings" asp-controller="Customer" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="section" value="notifications" />
+                    <input type="hidden" asp-for="Language" />
+                    <input type="hidden" asp-for="ShowProfile" />
+                    
+                    <div class="notification-row">
+                        <div>
+                            <div class="notification-title">Order Updates</div>
+                            <div class="notification-desc">Receive notifications about your order.</div>
+                        </div>
+                        <div class="form-check form-switch custom-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="OrderNotifications" id="orderUpdates">
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3 text-muted opacity-25">
+
+                    <div class="notification-row">
+                        <div>
+                            <div class="notification-title">Order Status</div>
+                            <div class="notification-desc">Get updates when your order status changes.</div>
+                        </div>
+                        <div class="form-check form-switch custom-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="EmailNotifications" id="orderStatus">
+                        </div>
+                    </div>
+
+                    <hr class="my-3 text-muted opacity-25">
+
+                    <div class="notification-row">
+                        <div>
+                            <div class="notification-title">Promotional Notifications</div>
+                            <div class="notification-desc">Receive special offers and promotions.</div>
+                        </div>
+                        <div class="form-check form-switch custom-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="PromotionalNotifications" id="promoNotif">
+                        </div>
+                    </div>
+
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-save me-1"></i> Save Preferences
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Password & Security -->
+        <div class="accordion-item" id="security-accordion">
+            <div class="accordion-header" onclick="toggleAccordion('security-accordion')">
+                <div class="accordion-icon-box" style="color: #F6A035; background: #FFF4E5;">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="accordion-title-box">
+                    <h3>Password & Security</h3>
+                    <p>Manage your password and account security.</p>
+                </div>
+                <div class="accordion-chevron">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-body">
+                <form asp-action="ManageSecurity" asp-controller="Customer" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Current Password</label>
+                        <div class="input-group">
+                            <input type="password" name="OldPassword" class="form-control" placeholder="Enter current password" required autocomplete="current-password">
+                            <button type="button" class="btn btn-outline-secondary toggle-password-btn" style="border-color:#dee2e6; background:#fff;" title="Show/Hide password">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">New Password</label>
+                            <div class="input-group">
+                                <input type="password" name="NewPassword" class="form-control" placeholder="Enter new password (min. 6 characters)" required autocomplete="new-password">
+                                <button type="button" class="btn btn-outline-secondary toggle-password-btn" style="border-color:#dee2e6; background:#fff;" title="Show/Hide password">
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Confirm New Password</label>
+                            <div class="input-group">
+                                <input type="password" name="ConfirmPassword" class="form-control" placeholder="Confirm new password" required autocomplete="new-password">
+                                <button type="button" class="btn btn-outline-secondary toggle-password-btn" style="border-color:#dee2e6; background:#fff;" title="Show/Hide password">
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                        <small class="text-muted"><i class="fas fa-shield-alt me-1 text-warning"></i> For your security, password fields are cleared once updated.</small>
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-key me-1"></i> Change Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Language -->
+        <div class="accordion-item" id="language-accordion">
+            <div class="accordion-header" onclick="toggleAccordion('language-accordion')">
+                <div class="accordion-icon-box" style="color: #F6A035; background: #FFF4E5;">
+                    <i class="fas fa-language"></i>
+                </div>
+                <div class="accordion-title-box">
+                    <h3>Language</h3>
+                    <p>Select your preferred application language.</p>
+                </div>
+                <div class="accordion-chevron">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="accordion-body">
+                <form asp-action="Settings" asp-controller="Customer" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="section" value="language" />
+                    <input type="hidden" asp-for="OrderNotifications" />
+                    <input type="hidden" asp-for="PromotionalNotifications" />
+                    <input type="hidden" asp-for="EmailNotifications" />
+                    <input type="hidden" asp-for="ShowProfile" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Application Language</label>
+                        <select asp-for="Language" class="form-select" id="appLanguageSelect">
+                            <option value="English">English</option>
+                            <option value="Urdu">Urdu (اردو)</option>
+                            <option value="Arabic">Arabic (العربية)</option>
+                        </select>
+                        <div class="form-text mt-2" style="color: #6c757d; font-size: 0.88rem;">
+                            <i class="fas fa-globe me-1 text-primary"></i> Selecting a language will translate the customer portal.
+                        </div>
+                    </div>
+                    <div class="text-end mt-4">
+                        <button type="submit" class="btn-save" style="background: #5D4037; color: white;">
+                            <i class="fas fa-save me-1"></i> Save Language
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .customer-settings-page {
+        min-height: calc(100vh - 70px);
+        background: #F5E6CA;
+        padding: 40px 20px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .settings-header {
+        max-width: 900px;
+        margin: 0 auto 30px;
+    }
+
+    .settings-header h2 {
+        color: #5D4037;
+        font-size: 32px;
+        margin-bottom: 8px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .settings-header h2 i {
+        color: #F6A035;
+    }
+
+    .settings-header p {
+        color: #795548;
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .settings-accordion {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .accordion-item {
+        background: #fff;
+        border-radius: 12px;
+        border: none;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .accordion-header {
+        display: flex;
+        align-items: center;
+        padding: 20px 24px;
+        cursor: pointer;
+        user-select: none;
+        background: #fff;
+        transition: background 0.2s;
+    }
+    
+    .accordion-header:hover {
+        background: #FAFAFA;
+    }
+
+    .accordion-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: #FFF4E5;
+        color: #F6A035;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-right: 20px;
+        flex-shrink: 0;
+    }
+
+    .accordion-title-box {
+        flex-grow: 1;
+    }
+
+    .accordion-title-box h3 {
+        margin: 0 0 4px;
+        font-size: 17px;
+        font-weight: 700;
+        color: #5D4037;
+    }
+
+    .accordion-title-box p {
+        margin: 0;
+        font-size: 13.5px;
+        color: #8D6E63;
+    }
+
+    .accordion-chevron {
+        color: #BCAAA4;
+        font-size: 14px;
+        transition: transform 0.3s ease;
+    }
+
+    .accordion-body {
+        padding: 0 24px 24px 88px;
+        display: none;
+    }
+
+    .accordion-item.active .accordion-body {
+        display: block;
+        animation: fadeIn 0.4s ease;
+    }
+
+    .accordion-item.active .accordion-chevron {
+        transform: rotate(180deg);
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Form Styles */
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 12px 16px;
+        border: 1px solid #E0E0E0;
+        color: #495057;
+        font-size: 14.5px;
+        box-shadow: none;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #F6A035;
+        box-shadow: 0 0 0 3px rgba(246, 160, 53, 0.15);
+    }
+
+    .input-group-text {
+        background: #fff;
+        border-color: #E0E0E0;
+    }
+
+    .form-label {
+        font-size: 13.5px;
+        color: #5D4037;
+        margin-bottom: 6px;
+    }
+
+    .btn-save {
+        background: #F6A035;
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+    .btn-save:hover {
+        background: #e58f27;
+        color: #fff;
+    }
+
+    /* Toggles */
+    .notification-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+    }
+
+    .notification-title {
+        font-weight: 700;
+        color: #5D4037;
+        font-size: 14.5px;
+        margin-bottom: 3px;
+    }
+
+    .notification-desc {
+        color: #8D6E63;
+        font-size: 13px;
+    }
+
+    .custom-switch .form-check-input {
+        width: 44px;
+        height: 22px;
+        cursor: pointer;
+    }
+    
+    .custom-switch .form-check-input:checked {
+        background-color: #F6A035;
+        border-color: #F6A035;
+    }
+
+    @@media (max-width: 768px) {
+        .accordion-body {
+            padding: 0 20px 24px 20px;
+        }
+        .accordion-header {
+            padding: 16px 20px;
+        }
+        .accordion-icon-box {
+            margin-right: 15px;
+        }
+    }
+</style>
+
+<script>
+    function toggleAccordion(id) {
+        const item = document.getElementById(id);
+        const allItems = document.querySelectorAll('.accordion-item');
+        
+        // Optional: Close others when one is opened
+        allItems.forEach(i => {
+            if (i.id !== id) {
+                i.classList.remove('active');
+            }
+        });
+
+        item.classList.toggle('active');
+    }
+
+    // Toggle password visibility
+    document.querySelectorAll('.toggle-password-btn').forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+            const inputGroup = this.closest('.input-group');
+            const input = inputGroup ? inputGroup.querySelector('input') : null;
+            const eye = this.querySelector('i');
+
+            if (input && eye) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    eye.classList.remove('fa-eye-slash');
+                    eye.classList.add('fa-eye');
+                    this.setAttribute('title', 'Hide password');
+                } else {
+                    input.type = 'password';
+                    eye.classList.remove('fa-eye');
+                    eye.classList.add('fa-eye-slash');
+                    this.setAttribute('title', 'Show password');
+                }
+            }
+        });
+    });
+
+    // Expand accordion automatically based on ActiveSection or TempData
+    @if (TempData["ActiveSection"]?.ToString() == "security" || (TempData["Error"] != null && TempData["Error"]!.ToString()!.Contains("password", StringComparison.OrdinalIgnoreCase)) || (TempData["Success"] != null && TempData["Success"]!.ToString()!.Contains("password", StringComparison.OrdinalIgnoreCase)))
+    {
+        <text>
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('security-accordion').classList.add('active');
+            });
+        </text>
+    }
+    else if (TempData["ActiveSection"]?.ToString() == "language")
+    {
+        <text>
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('language-accordion').classList.add('active');
+            });
+        </text>
+    }
+    else if (TempData["ActiveSection"]?.ToString() == "notifications")
+    {
+        <text>
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('notifications-accordion').classList.add('active');
+            });
+        </text>
+    }
+    else if (TempData["Success"] != null && TempData["Success"]!.ToString()!.Contains("Profile", StringComparison.OrdinalIgnoreCase))
+    {
+        <text>
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('profile-accordion').classList.add('active');
+            });
+        </text>
+    }
+</script>
